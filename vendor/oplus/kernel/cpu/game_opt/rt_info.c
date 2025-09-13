@@ -162,6 +162,14 @@ unlock:
 	heavy_task_boost(task, related_threads, total_num);
 }
 
+static bool need_tracked_task(char *name)
+{
+	bool skip = strstr(name, "binder:") || strstr(name, "HwBinder:") ||
+				strstr(name, "AudioTrack") || strstr(name, "NativeThread");
+
+	return !skip;
+}
+
 /*
  * Ascending order by wake_count
  */
@@ -188,6 +196,8 @@ static int rt_info_show(struct seq_file *m, void *v)
 	struct render_related_thread *results;
 	char *page;
 	char task_name[TASK_COMM_LEN];
+	pid_t tracked_pids[MAX_TRACKED_TASK_NUM];
+	int tracked_pid_num = 0;
 	ssize_t len = 0;
 	reset_critical_task_time();
 	if (atomic_read(&have_valid_render_pid) == 0)
@@ -228,10 +238,18 @@ static int rt_info_show(struct seq_file *m, void *v)
 
 	for (i = 0; i < result_num && i < MAX_TASK_NR; i++) {
 		if (get_task_name(results[i].pid, results[i].task, task_name)) {
+			if ((tracked_pid_num < MAX_TRACKED_TASK_NUM) && need_tracked_task(task_name)) {
+				tracked_pids[tracked_pid_num] = results[i].pid;
+				tracked_pid_num++;
+			}
+
 			len += snprintf(page + len, RESULT_PAGE_SIZE - len, "%d;%s;%u\n",
 				results[i].pid, task_name, results[i].wake_count);
 		}
 	}
+
+	if (tracked_pid_num > 0)
+		add_tasks_to_frame_group(tracked_pids, tracked_pid_num);
 
 	if (len > 0)
 		seq_puts(m, page);

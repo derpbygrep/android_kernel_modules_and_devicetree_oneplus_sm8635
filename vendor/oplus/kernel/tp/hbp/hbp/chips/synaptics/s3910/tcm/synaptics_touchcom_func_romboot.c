@@ -84,12 +84,12 @@ static int syna_tcm_romboot_send_command(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (out_size < sizeof(struct flash_param)) {
-		LOGE("Invalid size of out data, %d, min. size:%d\n",
+		hbp_err("Invalid size of out data, %d, min. size:%d\n",
 			out_size, (int)sizeof(struct flash_param));
 		return _EINVAL;
 	}
@@ -101,7 +101,7 @@ static int syna_tcm_romboot_send_command(struct tcm_dev *tcm_dev,
 			&resp_code,
 			delay_ms_resp);
 	if (retval < 0) {
-		LOGE("Fail to send romboot flash command 0x%02x\n",
+		hbp_err("Fail to send romboot flash command 0x%02x\n",
 			CMD_SPI_MASTER_WRITE_THEN_READ_EXTENDED);
 		goto exit;
 	}
@@ -119,7 +119,7 @@ static int syna_tcm_romboot_send_command(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 			tcm_dev->resp_buf.data_length);
 	if (retval < 0) {
-		LOGE("Fail to copy resp data to caller\n");
+		hbp_err("Fail to copy resp data to caller\n");
 		goto exit;
 	}
 
@@ -157,7 +157,7 @@ static int syna_tcm_romboot_multichip_send_command(struct tcm_dev *tcm_dev,
 	unsigned int offset = (int)sizeof(struct flash_param);
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -177,7 +177,7 @@ static int syna_tcm_romboot_multichip_send_command(struct tcm_dev *tcm_dev,
 
 	payld_buf = syna_pal_mem_alloc(payld_size, sizeof(unsigned char));
 	if (!payld_buf) {
-		LOGE("Fail to allocate buffer to store flash command\n");
+		hbp_err("Fail to allocate buffer to store flash command\n");
 		return _ENOMEM;
 	}
 
@@ -192,7 +192,7 @@ static int syna_tcm_romboot_multichip_send_command(struct tcm_dev *tcm_dev,
 					out_size,
 					out_size);
 			if (retval < 0) {
-				LOGE("Fail to copy payload to payld_buf\n");
+				hbp_err("Fail to copy payload to payld_buf\n");
 				goto exit;
 			}
 		}
@@ -207,7 +207,7 @@ static int syna_tcm_romboot_multichip_send_command(struct tcm_dev *tcm_dev,
 	retval = syna_pal_mem_cpy(payld_buf, payld_size,
 			&flash_param, sizeof(flash_param), sizeof(flash_param));
 	if (retval < 0) {
-		LOGE("Fail to copy flash_param header to payld_buf\n");
+		hbp_err("Fail to copy flash_param header to payld_buf\n");
 		goto exit;
 	}
 
@@ -218,7 +218,7 @@ static int syna_tcm_romboot_multichip_send_command(struct tcm_dev *tcm_dev,
 			in_size,
 			delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to write command 0x%x\n", flash_param.command);
+		hbp_err("Fail to write command 0x%x\n", flash_param.command);
 		goto exit;
 	}
 
@@ -251,12 +251,12 @@ static int syna_tcm_romboot_multichip_get_resp(struct tcm_dev *tcm_dev,
 	unsigned int xfer_len;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (resp && (resp_size < length)) {
-		LOGE("Invalid buffer size, len:%d, size:%d\n",
+		hbp_err("Invalid buffer size, len:%d, size:%d\n",
 			length, resp_size);
 		return _EINVAL;
 	}
@@ -265,7 +265,7 @@ static int syna_tcm_romboot_multichip_get_resp(struct tcm_dev *tcm_dev,
 
 	tmp_buf = syna_pal_mem_alloc(xfer_len, sizeof(unsigned char));
 	if (!tmp_buf) {
-		LOGE("Fail to allocate tmp_buf\n");
+		hbp_err("Fail to allocate tmp_buf\n");
 		return _ENOMEM;
 	}
 
@@ -273,7 +273,7 @@ static int syna_tcm_romboot_multichip_get_resp(struct tcm_dev *tcm_dev,
 			CMD_NONE, NULL, 0,
 			tmp_buf, xfer_len, delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to get resp, size: %d\n", xfer_len);
+		hbp_err("Fail to get resp, size: %d\n", xfer_len);
 		goto exit;
 	}
 
@@ -281,7 +281,7 @@ static int syna_tcm_romboot_multichip_get_resp(struct tcm_dev *tcm_dev,
 		retval = syna_pal_mem_cpy(resp, resp_size,
 				&tmp_buf[1], xfer_len - 1, length);
 		if (retval < 0) {
-			LOGE("Fail to copy resp data\n");
+			hbp_err("Fail to copy resp data\n");
 			goto exit;
 		}
 	}
@@ -315,7 +315,7 @@ static int syna_tcm_romboot_multichip_get_status(struct tcm_dev *tcm_dev,
 	int MAX_TIMEOUT = 1000;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -326,7 +326,7 @@ static int syna_tcm_romboot_multichip_get_status(struct tcm_dev *tcm_dev,
 				CMD_NONE, NULL, 0,
 				resp, 3, delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to poll the resp\n");
+			hbp_err("Fail to poll the resp\n");
 			goto exit;
 		}
 
@@ -341,7 +341,7 @@ static int syna_tcm_romboot_multichip_get_status(struct tcm_dev *tcm_dev,
 			*resp_length = syna_pal_le2_to_uint(&resp[1]);
 			goto exit;
 		} else {
-			LOGE("Invalid resp, %02x %02x %02x\n",
+			hbp_err("Invalid resp, %02x %02x %02x\n",
 				resp[0], resp[1], resp[2]);
 			retval = _EIO;
 			goto exit;
@@ -350,7 +350,7 @@ static int syna_tcm_romboot_multichip_get_status(struct tcm_dev *tcm_dev,
 	} while (timeout < MAX_TIMEOUT);
 
 	if (timeout >= 500) {
-		LOGE("Timeout to get the status\n");
+		hbp_err("Timeout to get the status\n");
 		retval = _EIO;
 	}
 exit:
@@ -390,7 +390,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 	unsigned int delay_ms;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -415,7 +415,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_buf_alloc(&romboot_data->out,
 			xfer_length + 2);
 		if (retval < 0) {
-			LOGE("Fail to allocate memory for buf.out\n");
+			hbp_err("Fail to allocate memory for buf.out\n");
 			goto exit;
 		}
 
@@ -431,7 +431,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 				wr_len - offset,
 				xfer_length);
 		if (retval < 0) {
-			LOGE("Fail to copy write data ,size: %d\n",
+			hbp_err("Fail to copy write data ,size: %d\n",
 				xfer_length);
 			goto exit;
 		}
@@ -452,7 +452,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 				0,
 				delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to write data to flash addr 0x%x, size %d\n",
+			hbp_err("Fail to write data to flash addr 0x%x, size %d\n",
 				flash_address, xfer_length + 2);
 			goto exit;
 		}
@@ -460,7 +460,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_romboot_multichip_get_status(tcm_dev,
 			&resp_code, &resp_length, ROMBOOT_DELAY_MS);
 		if (retval < 0) {
-			LOGE("Fail to get the response of command 0x%x\n",
+			hbp_err("Fail to get the response of command 0x%x\n",
 				CMD_WRITE_FLASH);
 			goto exit;
 		}
@@ -468,7 +468,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 		LOGD("status:%02x, data_length:%d\n", resp_code, resp_length);
 
 		if (resp_code != STATUS_OK) {
-			LOGE("Invalid response of command %x\n",
+			hbp_err("Invalid response of command %x\n",
 				CMD_WRITE_FLASH);
 			retval = _EIO;
 			goto exit;
@@ -477,7 +477,7 @@ static int syna_tcm_romboot_multichip_write_flash(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_romboot_multichip_get_resp(tcm_dev,
 				resp_length, NULL, 0, ROMBOOT_DELAY_MS);
 		if (retval < 0) {
-			LOGE("Fail to get the boot info packet\n");
+			hbp_err("Fail to get the boot info packet\n");
 			goto exit;
 		}
 
@@ -549,7 +549,7 @@ static int syna_tcm_romboot_multichip_erase_flash(struct tcm_dev *tcm_dev,
 			0,
 			erase_delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to erase data at 0x%x (page:0x%x, count:%d)\n",
+		hbp_err("Fail to erase data at 0x%x (page:0x%x, count:%d)\n",
 			address, page_start, page_count);
 		return retval;
 	}
@@ -557,7 +557,7 @@ static int syna_tcm_romboot_multichip_erase_flash(struct tcm_dev *tcm_dev,
 	retval = syna_tcm_romboot_multichip_get_status(tcm_dev,
 			&resp_code, &resp_length, ROMBOOT_DELAY_MS);
 	if (retval < 0) {
-		LOGE("Fail to get the response of command 0x%x\n",
+		hbp_err("Fail to get the response of command 0x%x\n",
 			CMD_ERASE_FLASH);
 		return retval;
 	}
@@ -565,7 +565,7 @@ static int syna_tcm_romboot_multichip_erase_flash(struct tcm_dev *tcm_dev,
 	LOGD("status:%02x, data_length:%d\n", resp_code, resp_length);
 
 	if (resp_code != STATUS_OK) {
-		LOGE("Invalid response of command %x\n", CMD_WRITE_FLASH);
+		hbp_err("Invalid response of command %x\n", CMD_WRITE_FLASH);
 		retval = _EIO;
 		return retval;
 	}
@@ -595,21 +595,21 @@ static int syna_tcm_romboot_multichip_get_boot_info(struct tcm_dev *tcm_dev,
 	unsigned int copy_size;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	retval = syna_tcm_romboot_multichip_send_command(tcm_dev,
 		CMD_GET_BOOT_INFO, NULL, 0, NULL, 0, ROMBOOT_DELAY_MS);
 	if (retval < 0) {
-		LOGE("Fail to run command 0x%x\n", CMD_GET_BOOT_INFO);
+		hbp_err("Fail to run command 0x%x\n", CMD_GET_BOOT_INFO);
 		goto exit;
 	}
 
 	retval = syna_tcm_romboot_multichip_get_status(tcm_dev,
 		&resp_code, &resp_data_len, ROMBOOT_DELAY_MS);
 	if (retval < 0) {
-		LOGE("Fail to get the response of command 0x%x\n",
+		hbp_err("Fail to get the response of command 0x%x\n",
 			CMD_GET_BOOT_INFO);
 		return retval;
 	}
@@ -617,7 +617,7 @@ static int syna_tcm_romboot_multichip_get_boot_info(struct tcm_dev *tcm_dev,
 	LOGD("status:%02x, data_length:%d\n", resp_code, resp_data_len);
 
 	if (resp_code != STATUS_OK) {
-		LOGE("Invalid response of command %x\n", CMD_GET_BOOT_INFO);
+		hbp_err("Invalid response of command %x\n", CMD_GET_BOOT_INFO);
 		retval = _EIO;
 		return retval;
 	}
@@ -631,7 +631,7 @@ static int syna_tcm_romboot_multichip_get_boot_info(struct tcm_dev *tcm_dev,
 		copy_size, (unsigned char *)boot_info,
 		sizeof(struct tcm_boot_info), ROMBOOT_DELAY_MS);
 	if (retval < 0) {
-		LOGE("Fail to get the boot info packet\n");
+		hbp_err("Fail to get the boot info packet\n");
 		return retval;
 	}
 
@@ -660,27 +660,27 @@ static int syna_tcm_romboot_preparation(struct tcm_dev *tcm_dev,
 	unsigned int wr_chunk;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!romboot_data) {
-		LOGE("Invalid romboot data blob\n");
+		hbp_err("Invalid romboot data blob\n");
 		return _EINVAL;
 	}
 
-	LOGI("Set up preparation, multi-chip: %s\n",
+	hbp_info("Set up preparation, multi-chip: %s\n",
 		(is_multichip)?"yes":"no");
 
 	retval = syna_tcm_identify(tcm_dev, NULL);
 	if (retval < 0) {
-		LOGE("Fail to do identification\n");
+		hbp_err("Fail to do identification\n");
 		return retval;
 	}
 
 	/* switch to bootloader mode */
 	if (IS_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGI("Prepare to enter bootloader mode\n");
+		hbp_info("Prepare to enter bootloader mode\n");
 		if (is_multichip)
 			retval = syna_tcm_switch_fw_mode(tcm_dev,
 				MODE_MULTICHIP_TDDI_BOOTLOADER,
@@ -691,25 +691,25 @@ static int syna_tcm_romboot_preparation(struct tcm_dev *tcm_dev,
 				FW_MODE_SWITCH_DELAY_MS);
 
 		if (retval < 0) {
-			LOGE("Fail to enter bootloader mode\n");
+			hbp_err("Fail to enter bootloader mode\n");
 			return retval;
 		}
 	}
 	/* switch to rom boot mode */
 	if (!IS_ROM_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGI("Prepare to enter rom boot mode\n");
+		hbp_info("Prepare to enter rom boot mode\n");
 
 		retval = syna_tcm_switch_fw_mode(tcm_dev,
 				MODE_ROMBOOTLOADER,
 				FW_MODE_SWITCH_DELAY_MS);
 		if (retval < 0) {
-			LOGE("Fail to enter rom boot mode\n");
+			hbp_err("Fail to enter rom boot mode\n");
 			return retval;
 		}
 	}
 
 	if (!IS_ROM_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device not in romboot mode\n");
+		hbp_err("Device not in romboot mode\n");
 		return _EINVAL;
 	}
 
@@ -721,7 +721,7 @@ static int syna_tcm_romboot_preparation(struct tcm_dev *tcm_dev,
 	retval = syna_tcm_romboot_multichip_get_boot_info(tcm_dev,
 			boot_info);
 	if (retval < 0) {
-		LOGE("Fail to get boot info\n");
+		hbp_err("Fail to get boot info\n");
 		return retval;
 	}
 
@@ -730,35 +730,35 @@ static int syna_tcm_romboot_preparation(struct tcm_dev *tcm_dev,
 	temp = boot_info->write_block_size_words;
 	romboot_data->write_block_size = temp * 2;
 
-	LOGI("Write block size: %d (words size: %d)\n",
+	hbp_info("Write block size: %d (words size: %d)\n",
 		romboot_data->write_block_size, temp);
 
 	temp = syna_pal_le2_to_uint(boot_info->erase_page_size_words);
 	romboot_data->page_size = temp * 2;
 
-	LOGI("Erase page size: %d (words size: %d)\n",
+	hbp_info("Erase page size: %d (words size: %d)\n",
 		romboot_data->page_size, temp);
 
 	temp = syna_pal_le2_to_uint(boot_info->max_write_payload_size);
 	romboot_data->max_write_payload_size = temp;
 
-	LOGI("Max write flash data size: %d\n",
+	hbp_info("Max write flash data size: %d\n",
 		romboot_data->max_write_payload_size);
 
 	if (romboot_data->write_block_size > (wr_chunk - 9)) {
-		LOGE("Write block size, %d, greater than chunk space, %d\n",
+		hbp_err("Write block size, %d, greater than chunk space, %d\n",
 			romboot_data->write_block_size, (wr_chunk - 9));
 		return _EINVAL;
 	}
 
 	if (romboot_data->write_block_size == 0) {
-		LOGE("Invalid write block size %d\n",
+		hbp_err("Invalid write block size %d\n",
 			romboot_data->write_block_size);
 		return _EINVAL;
 	}
 
 	if (romboot_data->page_size == 0) {
-		LOGE("Invalid erase page size %d\n",
+		hbp_err("Invalid erase page size %d\n",
 			romboot_data->page_size);
 		return _EINVAL;
 	}
@@ -794,7 +794,7 @@ static int syna_tcm_romboot_jedec_send_command(struct tcm_dev *tcm_dev,
 	struct flash_param flash_param;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -819,14 +819,14 @@ static int syna_tcm_romboot_jedec_send_command(struct tcm_dev *tcm_dev,
 
 	payld_buf = syna_pal_mem_alloc(payld_size, sizeof(unsigned char));
 	if (!payld_buf) {
-		LOGE("Fail to allocate buffer to store flash command\n");
+		hbp_err("Fail to allocate buffer to store flash command\n");
 		return _ENOMEM;
 	}
 
 	retval = syna_pal_mem_cpy(payld_buf, payld_size,
 			&flash_param, sizeof(flash_param), sizeof(flash_param));
 	if (retval < 0) {
-		LOGE("Fail to copy flash_param header to payld_buf\n");
+		hbp_err("Fail to copy flash_param header to payld_buf\n");
 		goto exit;
 	}
 
@@ -835,7 +835,7 @@ static int syna_tcm_romboot_jedec_send_command(struct tcm_dev *tcm_dev,
 				payld_size - sizeof(flash_param),
 				out, out_size, out_size);
 		if (retval < 0) {
-			LOGE("Fail to copy data to payld_buf\n");
+			hbp_err("Fail to copy data to payld_buf\n");
 			goto exit;
 		}
 	}
@@ -847,7 +847,7 @@ static int syna_tcm_romboot_jedec_send_command(struct tcm_dev *tcm_dev,
 			in_size,
 			delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to write flash command 0x%x\n", flash_command);
+		hbp_err("Fail to write flash command 0x%x\n", flash_command);
 		goto exit;
 	}
 
@@ -878,7 +878,7 @@ static int syna_tcm_romboot_jedec_get_status(struct tcm_dev *tcm_dev,
 	int STATUS_CHECK_RETRY = 50;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -891,7 +891,7 @@ static int syna_tcm_romboot_jedec_get_status(struct tcm_dev *tcm_dev,
 				sizeof(status),
 				delay_ms);
 		if (retval < 0) {
-			LOGE("Failed to write JEDEC_READ_STATUS\n");
+			hbp_err("Failed to write JEDEC_READ_STATUS\n");
 			return retval;
 		}
 
@@ -928,7 +928,7 @@ static int syna_tcm_romboot_jedec_erase_flash(struct tcm_dev *tcm_dev,
 	int retval;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -940,7 +940,7 @@ static int syna_tcm_romboot_jedec_erase_flash(struct tcm_dev *tcm_dev,
 			0,
 			delay_ms);
 	if (retval < 0) {
-		LOGE("Failed to write JEDEC_WRITE_ENABLE\n");
+		hbp_err("Failed to write JEDEC_WRITE_ENABLE\n");
 		return retval;
 	}
 
@@ -952,13 +952,13 @@ static int syna_tcm_romboot_jedec_erase_flash(struct tcm_dev *tcm_dev,
 			0,
 			delay_ms);
 	if (retval < 0) {
-		LOGE("Failed to write JEDEC_WRITE_ENABLE\n");
+		hbp_err("Failed to write JEDEC_WRITE_ENABLE\n");
 		return retval;
 	}
 
 	retval = syna_tcm_romboot_jedec_get_status(tcm_dev, delay_ms);
 	if (retval < 0)
-		LOGE("Fail to get correct status, retval = %d\n", retval);
+		hbp_err("Fail to get correct status, retval = %d\n", retval);
 
 	return retval;
 }
@@ -991,12 +991,12 @@ static int syna_tcm_romboot_jedec_write_flash(struct tcm_dev *tcm_dev,
 	unsigned int xfer_length;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!data) || (data_size == 0)) {
-		LOGE("Invalid image data, no data available\n");
+		hbp_err("Invalid image data, no data available\n");
 		return _EINVAL;
 	}
 
@@ -1020,7 +1020,7 @@ static int syna_tcm_romboot_jedec_write_flash(struct tcm_dev *tcm_dev,
 				0,
 				delay_ms);
 		if (retval < 0) {
-			LOGE("Failed to write JEDEC_WRITE_ENABLE\n");
+			hbp_err("Failed to write JEDEC_WRITE_ENABLE\n");
 			goto exit;
 		}
 
@@ -1034,7 +1034,7 @@ static int syna_tcm_romboot_jedec_write_flash(struct tcm_dev *tcm_dev,
 				data_size - offset,
 				xfer_length);
 		if (retval < 0) {
-			LOGE("Fail to copy data to write, size: %d\n",
+			hbp_err("Fail to copy data to write, size: %d\n",
 				xfer_length);
 			goto exit;
 		}
@@ -1047,16 +1047,16 @@ static int syna_tcm_romboot_jedec_write_flash(struct tcm_dev *tcm_dev,
 				0,
 				delay_ms);
 		if (retval < 0) {
-			LOGE("Failed to write data to addr 0x%x (offset: %x)\n",
+			hbp_err("Failed to write data to addr 0x%x (offset: %x)\n",
 				address + offset, offset);
-			LOGE("Remaining data %d\n",
+			hbp_err("Remaining data %d\n",
 				remaining_length);
 			goto exit;
 		}
 
 		retval = syna_tcm_romboot_jedec_get_status(tcm_dev, delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to get correct status, retval = %d\n",
+			hbp_err("Fail to get correct status, retval = %d\n",
 				retval);
 			goto exit;
 		}
@@ -1180,12 +1180,12 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 	int idx;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!ihex) || (ihex_size == 0)) {
-		LOGE("Invalid ihex data\n");
+		hbp_err("Invalid ihex data\n");
 		return _EINVAL;
 	}
 
@@ -1195,7 +1195,7 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 	romboot_data = syna_pal_mem_alloc(1,
 			sizeof(struct tcm_romboot_data_blob));
 	if (!romboot_data) {
-		LOGE("Fail to allocate romboot data blob\n");
+		hbp_err("Fail to allocate romboot data blob\n");
 
 		return _ENOMEM;
 	}
@@ -1210,7 +1210,7 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 	ihex_info->bin = syna_pal_mem_alloc(flash_size,
 			sizeof(unsigned char));
 	if (!ihex_info->bin) {
-		LOGE("Fail to allocate buffer for ihex data\n");
+		hbp_err("Fail to allocate buffer for ihex data\n");
 		syna_pal_mem_free((void *)romboot_data);
 
 		return _ENOMEM;
@@ -1226,14 +1226,14 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 	retval = syna_tcm_parse_fw_ihex((const char *)ihex,
 			ihex_size, ihex_info, len_per_line);
 	if (retval < 0) {
-		LOGE("Fail to parse firmware ihex file\n");
+		hbp_err("Fail to parse firmware ihex file\n");
 		goto exit;
 	}
 
 	if (!is_multichip) {
 		header = (unsigned short *)ihex_info->bin;
 		if (*header != BINARY_FILE_MAGIC_VALUE) {
-			LOGE("Incorrect image header 0x%04X\n", *header);
+			hbp_err("Incorrect image header 0x%04X\n", *header);
 			goto exit;
 		}
 	}
@@ -1243,7 +1243,7 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 			romboot_data,
 			is_multichip);
 	if (retval < 0) {
-		LOGE("Fail to do preparation\n");
+		hbp_err("Fail to do preparation\n");
 		goto reset;
 	}
 
@@ -1280,7 +1280,7 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 		}
 	}
 	if (retval < 0) {
-		LOGE("Fail to erase flash\n");
+		hbp_err("Fail to erase flash\n");
 		goto reset;
 	}
 
@@ -1306,12 +1306,12 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 				wr_delay_ms,
 				is_multichip);
 		if (retval < 0) {
-			LOGE("Fail to write data to addr 0x%x, size:%d\n",
+			hbp_err("Fail to write data to addr 0x%x, size:%d\n",
 				block->flash_addr, block->size);
 			goto reset;
 		}
 
-		LOGI("Data written, size:%d\n", block->size);
+		hbp_info("Data written, size:%d\n", block->size);
 	}
 
 	LOGN("End of ihex update\n");
@@ -1321,7 +1321,7 @@ int syna_tcm_romboot_do_ihex_update(struct tcm_dev *tcm_dev,
 reset:
 	retval = syna_tcm_reset(tcm_dev);
 	if (retval < 0) {
-		LOGE("Fail to do reset\n");
+		hbp_err("Fail to do reset\n");
 		goto exit;
 	}
 
@@ -1375,12 +1375,12 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 	bool reflash_required = false;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!image) || (image_size == 0)) {
-		LOGE("Invalid image data\n");
+		hbp_err("Invalid image data\n");
 		return _EINVAL;
 	}
 
@@ -1389,7 +1389,7 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 	romboot_data = syna_pal_mem_alloc(1,
 			sizeof(struct tcm_romboot_data_blob));
 	if (!romboot_data) {
-		LOGE("Fail to allocate romboot data blob\n");
+		hbp_err("Fail to allocate romboot data blob\n");
 
 		return _ENOMEM;
 	}
@@ -1405,14 +1405,14 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_parse_fw_image(image, &romboot_data->image_info);
 	if (retval < 0) {
-		LOGE("Fail to parse firmware image\n");
+		hbp_err("Fail to parse firmware image\n");
 		retval = _EINVAL;
 		goto exit;
 	}
 
 	block = &romboot_data->image_info.data[AREA_APP_CONFIG];
 	if (block->size < sizeof(struct app_config_header)) {
-		LOGE("Invalid application config in image file\n");
+		hbp_err("Invalid application config in image file\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -1458,12 +1458,12 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 	/* set up flash access, and enter the bootloader mode */
 	retval = syna_tcm_romboot_preparation(tcm_dev, romboot_data, true);
 	if (retval < 0) {
-		LOGE("Fail to do preparation\n");
+		hbp_err("Fail to do preparation\n");
 		goto reset;
 	}
 
 	if (!IS_ROM_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGE("Incorrect device mode 0x%02x, expected:0x%02x\n",
+		hbp_err("Incorrect device mode 0x%02x, expected:0x%02x\n",
 			tcm_dev->dev_mode, MODE_ROMBOOTLOADER);
 		retval = _EINVAL;
 		goto reset;
@@ -1505,7 +1505,7 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 				erase_delay_ms,
 				true);
 		if (retval < 0) {
-			LOGE("Fail to erase %s area\n", AREA_ID_STR(block->id));
+			hbp_err("Fail to erase %s area\n", AREA_ID_STR(block->id));
 			goto reset;
 		}
 
@@ -1547,7 +1547,7 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 				true);
 
 		if (retval < 0) {
-			LOGE("Fail to update %s partition, size: %d\n",
+			hbp_err("Fail to update %s partition, size: %d\n",
 				AREA_ID_STR(block->id), block->size);
 			goto reset;
 		}
@@ -1561,7 +1561,7 @@ int syna_tcm_romboot_do_multichip_reflash(struct tcm_dev *tcm_dev,
 reset:
 	retval = syna_tcm_reset(tcm_dev);
 	if (retval < 0) {
-		LOGE("Fail to do reset\n");
+		hbp_err("Fail to do reset\n");
 		goto exit;
 	}
 
@@ -1597,7 +1597,7 @@ int syna_tcm_get_romboot_info(struct tcm_dev *tcm_dev,
 	unsigned int copy_size = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1608,7 +1608,7 @@ int syna_tcm_get_romboot_info(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_GET_ROMBOOT_INFO);
 		goto exit;
 	}
@@ -1626,7 +1626,7 @@ int syna_tcm_get_romboot_info(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 		copy_size);
 	if (retval < 0) {
-		LOGE("Fail to copy romboot info to caller\n");
+		hbp_err("Fail to copy romboot info to caller\n");
 		goto exit;
 	}
 

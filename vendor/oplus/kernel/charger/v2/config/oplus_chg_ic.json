@@ -409,13 +409,6 @@
                         "zh": "FPGA复位中断"
                     },
                     "str": "FPGA_RST"
-                },
-                {
-                    "lable": "OPLUS_IC_VIRQ_PD_COMPLETED",
-                    "desc": {
-                        "zh": "PD和PPS识别完成中断"
-                    },
-                    "str": "pd_completed"
                 }
             ]
         },

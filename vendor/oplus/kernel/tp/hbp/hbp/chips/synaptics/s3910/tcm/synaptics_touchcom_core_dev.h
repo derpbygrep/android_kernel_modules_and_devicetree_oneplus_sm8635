@@ -38,6 +38,7 @@
  */
 
 #include "../syna_tcm2_runtime.h"
+#include "../../../../utils/debug.h"
 
 #ifndef _SYNAPTICS_TOUCHCOM_CORE_DEV_H_
 #define _SYNAPTICS_TOUCHCOM_CORE_DEV_H_
@@ -959,7 +960,7 @@ static inline int syna_tcm_buf_alloc(struct tcm_buffer *pbuf,
 		unsigned int size)
 {
 	if (!pbuf) {
-		LOGE("Invalid buffer structure\n");
+		hbp_err("Invalid buffer structure\n");
 		return -1;
 	}
 
@@ -969,7 +970,7 @@ static inline int syna_tcm_buf_alloc(struct tcm_buffer *pbuf,
 
 		pbuf->buf = syna_pal_mem_alloc(size, sizeof(unsigned char));
 		if (!(pbuf->buf)) {
-			LOGE("Fail to allocate memory (size = %d)\n",
+			hbp_err("Fail to allocate memory (size = %d)\n",
 				(int)(size*sizeof(unsigned char)));
 			pbuf->buf_size = 0;
 			pbuf->data_length = 0;
@@ -1006,7 +1007,7 @@ static inline int syna_tcm_buf_realloc(struct tcm_buffer *pbuf,
 	unsigned int temp_size = 0;
 
 	if (!pbuf) {
-		LOGE("Invalid buffer structure\n");
+		hbp_err("Invalid buffer structure\n");
 		return -1;
 	}
 
@@ -1016,7 +1017,7 @@ static inline int syna_tcm_buf_realloc(struct tcm_buffer *pbuf,
 
 		pbuf->buf = syna_pal_mem_alloc(size, sizeof(unsigned char));
 		if (!(pbuf->buf)) {
-			LOGE("Fail to allocate memory (size = %d)\n",
+			hbp_err("Fail to allocate memory (size = %d)\n",
 				(int)(size * sizeof(unsigned char)));
 			syna_pal_mem_free((void *)temp_src);
 			pbuf->buf_size = 0;
@@ -1029,7 +1030,7 @@ static inline int syna_tcm_buf_realloc(struct tcm_buffer *pbuf,
 				temp_size,
 				temp_size);
 		if (retval < 0) {
-			LOGE("Fail to copy data\n");
+			hbp_err("Fail to copy data\n");
 			syna_pal_mem_free((void *)temp_src);
 			syna_pal_mem_free((void *)pbuf->buf);
 			pbuf->buf_size = 0;
@@ -1075,7 +1076,7 @@ static inline void syna_tcm_buf_init(struct tcm_buffer *pbuf)
 static inline void syna_tcm_buf_lock(struct tcm_buffer *pbuf)
 {
 	if (pbuf->ref_cnt != 0)
-		LOGE("Buffer access out-of balance, %d\n", pbuf->ref_cnt);
+		hbp_err("Buffer access out-of balance, %d\n", pbuf->ref_cnt);
 
 	syna_pal_mutex_lock(&pbuf->buf_mutex);
 	pbuf->ref_cnt++;
@@ -1094,7 +1095,7 @@ static inline void syna_tcm_buf_lock(struct tcm_buffer *pbuf)
 static inline void syna_tcm_buf_unlock(struct tcm_buffer *pbuf)
 {
 	if (pbuf->ref_cnt != 1)
-		LOGE("Buffer access out-of balance, %d\n", pbuf->ref_cnt);
+		hbp_err("Buffer access out-of balance, %d\n", pbuf->ref_cnt);
 
 	pbuf->ref_cnt--;
 	syna_pal_mutex_unlock(&pbuf->buf_mutex);
@@ -1113,7 +1114,7 @@ static inline void syna_tcm_buf_unlock(struct tcm_buffer *pbuf)
 static inline void syna_tcm_buf_release(struct tcm_buffer *pbuf)
 {
 	if (pbuf->ref_cnt != 0)
-		LOGE("Buffer access hold, %d\n", pbuf->ref_cnt);
+		hbp_err("Buffer access hold, %d\n", pbuf->ref_cnt);
 
 	syna_pal_mutex_free(&pbuf->buf_mutex);
 	syna_pal_mem_free((void *)pbuf->buf);
@@ -1162,7 +1163,7 @@ static inline int syna_tcm_buf_copy(struct tcm_buffer *dest,
 	if (dest->buf_size < src->data_length) {
 		retval = syna_tcm_buf_alloc(dest, src->data_length + 1);
 		if (retval < 0) {
-			LOGE("Fail to reallocate the given buffer, size: %d\n",
+			hbp_err("Fail to reallocate the given buffer, size: %d\n",
 				src->data_length + 1);
 			return retval;
 		}
@@ -1175,7 +1176,7 @@ static inline int syna_tcm_buf_copy(struct tcm_buffer *dest,
 			src->buf_size,
 			src->data_length);
 	if (retval < 0) {
-		LOGE("Fail to copy data to caller, size: %d\n",
+		hbp_err("Fail to copy data to caller, size: %d\n",
 			src->data_length);
 		return retval;
 	}

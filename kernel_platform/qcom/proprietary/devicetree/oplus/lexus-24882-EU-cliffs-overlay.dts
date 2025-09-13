@@ -47,4 +47,8 @@
 		pinctrl-0 = <&rf_cable0_active>;
 	};
 	//#endif /* OPLUS_FEATURE_RF_CABLE_DETECT */
+
+	oplus,blk-mq {
+	    block_graded_thread_enable = "y";
+	};
 };

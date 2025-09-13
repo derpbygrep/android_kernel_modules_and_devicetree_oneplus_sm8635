@@ -3638,55 +3638,6 @@ static ssize_t chg_up_limit_store(struct device *dev, struct device_attribute *a
 }
 DEVICE_ATTR_RW(chg_up_limit);
 
-#define LPD_CONFIG_BUF_SIZE		128
-static char lpd_config_buf[LPD_CONFIG_BUF_SIZE];
-static ssize_t lpd_config_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct oplus_configfs_device *chip = dev->driver_data;
-
-	if (!chip) {
-		chg_err("chip is NULL\n");
-		return -EINVAL;
-	}
-
-	return sprintf(buf, "%s\n", lpd_config_buf);
-}
-
-static ssize_t lpd_config_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-	char *parse_ptr, *trimmed, *token;
-	struct oplus_configfs_device *chip = dev->driver_data;
-	int values[MAX_LPD_CONFIG_NUM];
-	int i = 0;
-	int ret;
-	size_t copy_size = min_t(size_t, count, LPD_CONFIG_BUF_SIZE - 1);
-
-	memcpy(lpd_config_buf, buf, copy_size);
-	lpd_config_buf[copy_size] = '\0';
-	parse_ptr = lpd_config_buf;
-
-	while ((token = strsep(&parse_ptr, ",")) != NULL && i < MAX_LPD_CONFIG_NUM) {
-		trimmed = strim(token);
-		if (*trimmed == '\0') {
-			chg_err("Empty token at position %d\n", i);
-			continue;
-		}
-
-		ret = kstrtoint(trimmed, 10, &values[i]);
-		if (ret != 0) {
-			chg_err("Invalid number '%s' at position %d\n", trimmed, i);
-			return -EINVAL;
-		}
-
-		chg_info("values[%d] = %d\n", i, values[i]);
-		i++;
-	}
-
-	oplus_wired_set_lpd_config(chip->wired_topic, values);
-	return count;
-}
-DEVICE_ATTR_RW(lpd_config);
-
 static ssize_t super_endurance_mode_status_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct oplus_configfs_device *chip = dev->driver_data;
@@ -3968,7 +3919,6 @@ static struct device_attribute *oplus_common_attributes[] = {
 	&dev_attr_chg_up_limit,
 	&dev_attr_plc,
 	&dev_attr_dec_delta,
-	&dev_attr_lpd_config,
 	NULL
 };
 

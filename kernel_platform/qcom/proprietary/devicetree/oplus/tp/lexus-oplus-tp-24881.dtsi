@@ -75,6 +75,18 @@
 			debounce-interval = <32>; /* standard debounce time 32ms */
 		};
 	};
+
+	tlmm-vm-test {
+		tlmm-vm-gpio-list = <&tlmm 16 0 &tlmm 17 0 &tlmm 18 0 &tlmm 19 0
+				     &tlmm 45 0 &tlmm 128 0 &tlmm 129 0 &tlmm 131 0
+				     &tlmm 29 0 &tlmm 54 0 &tlmm 77 0 &tlmm 78 0>;
+	};
+
+	tlmm-vm-mem-access {
+		tlmm-vm-gpio-list = <&tlmm 16 0 &tlmm 17 0 &tlmm 18 0 &tlmm 19 0
+				     &tlmm 45 0 &tlmm 128 0 &tlmm 129 0 &tlmm 131 0
+				     &tlmm 29 0 &tlmm 54 0 &tlmm 77 0 &tlmm 78 0>;
+	};
 };
 
 &qupv3_se4_i2c {

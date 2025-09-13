@@ -1426,6 +1426,14 @@ void adjust_rt_lowest_mask(struct task_struct *p, struct cpumask *local_cpu_mask
 	while (drop_cpu < nr_cpu_ids) {
 		int ux_task_state;
 
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_PIPELINE)
+		if (oplus_pipeline_rt_skip_prime_cpu(drop_cpu)) {
+			cpumask_clear_cpu(drop_cpu, local_cpu_mask);
+			drop_cpu = cpumask_next(drop_cpu, local_cpu_mask);
+			continue;
+		}
+#endif
+
 		/*
 		 * Note:
 		 * There may be situations where cpus_mask and cpus_ptr are
@@ -1577,6 +1585,15 @@ bool sa_skip_rt_sync(struct rq *rq, struct task_struct *p, bool *sync)
 	struct oplus_task_struct *ots;
 	unsigned long irqflag;
 
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_PIPELINE)
+	if (oplus_pipeline_rt_skip_prime_cpu(cpu)) {
+		if (*sync) {
+			*sync = false;
+			return true;
+		}
+	}
+#endif
+
 	spin_lock_irqsave(orq->ux_list_lock, irqflag);
 	ots = ux_list_first_entry(&orq->ux_list);
 	if (IS_ERR_OR_NULL(ots) || test_bit(IM_FLAG_CAMERA_HAL, &ots->im_flag)) {
@@ -1602,6 +1619,11 @@ bool sa_rt_skip_ux_cpu(int cpu)
 	struct rq *rq;
 	struct oplus_rq *orq;
 	struct task_struct *curr;
+
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_PIPELINE)
+	if (oplus_pipeline_rt_skip_prime_cpu(cpu))
+		return true;
+#endif
 
 	rq = cpu_rq(cpu);
 	orq = (struct oplus_rq *) rq->android_oem_data1;

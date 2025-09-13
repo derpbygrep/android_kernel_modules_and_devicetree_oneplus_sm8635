@@ -88,6 +88,7 @@ void set_ux_task_dsq_id(struct task_struct *task)
 	int ux_state = -1;
 	int sub_ux_state = -1;
 	bool static_ux, inherit_ux;
+	struct oplus_task_struct *ots = NULL;
 
 	if (!task) {
 		return;
@@ -95,13 +96,18 @@ void set_ux_task_dsq_id(struct task_struct *task)
 
 	get_task_struct(task);
 
-	ux_state = oplus_get_ux_state(task);
-	static_ux = !!(ux_state & SCHED_ASSIST_UX_MASK);
-	inherit_ux = !!(ux_state & SA_TYPE_INHERIT);
+	ots = get_oplus_task_struct(task);
+	if (!IS_ERR_OR_NULL(ots)) {
+		ux_state = ots->ux_state;
+		sub_ux_state = ots->sub_ux_state;
+	}
+	static_ux = !!oplus_get_static_ux_state(task);
+	inherit_ux = !!oplus_get_inherited_ux_state(task);
 
 	/*
-	* inherit_ux must be checked before static_ux,
-	* because inherit_ux maybe (SA_TYPE_INHERIT | SA_TYPE_LIGHT)
+	* inherit_ux should be checked before static_ux,
+	* because ux state maybe both static and inherit,
+	* for example, ux_state = 0x4, sub_ux_state = 0x10004, inherit_type = 3
 	*/
 	if (inherit_ux) {
 		__set_ux_task_dsq_id(task, ux_state, sub_ux_state,
