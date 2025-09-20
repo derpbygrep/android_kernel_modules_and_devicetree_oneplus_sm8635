@@ -144,8 +144,19 @@ static void tcpc_set_voltage_max_and_min(struct pd_manager_chip *chip, int max, 
 
 static void tcpc_set_current_max(struct pd_manager_chip *chip, int max)
 {
-	if (chip->current_max_ma == max)
+	struct votable *icl_votable;
+	int icl_tmp_ma = 0;
+
+	icl_votable = find_votable("WIRED_ICL");
+	if (!icl_votable)
+		chg_err("WIRED_ICL votable not found\n");
+	else
+		icl_tmp_ma = get_client_vote_locked(icl_votable, MAX_VOTER);
+
+	if (chip->current_max_ma == max && icl_tmp_ma <= max && icl_tmp_ma > 0) {
+		chg_info("current_max_ma = %d\n", icl_tmp_ma);
 		return;
+	}
 	chg_info("current_max_ma = %d\n", max);
 	chip->current_max_ma = max;
 	oplus_chg_ic_virq_trigger(chip->ic_dev, OPLUS_IC_VIRQ_CURRENT_CHANGED);

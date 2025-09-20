@@ -70,12 +70,12 @@ int syna_tcm_get_touch_data(const unsigned char *report,
 	unsigned int remaining_bits;
 
 	if (bits == 0 || bits > 32) {
-		LOGE("Invalid number of bits %d\n", bits);
+		hbp_err("Invalid number of bits %d\n", bits);
 		return _EINVAL;
 	}
 
 	if (!report) {
-		LOGE("Invalid report data\n");
+		hbp_err("Invalid report data\n");
 		return _EINVAL;
 	}
 
@@ -141,7 +141,7 @@ static int syna_tcm_get_gesture_data(const unsigned char *report,
 	unsigned int data_end;
 
 	if (!report) {
-		LOGE("Invalid report data\n");
+		hbp_err("Invalid report data\n");
 		return _EINVAL;
 	}
 
@@ -157,7 +157,7 @@ static int syna_tcm_get_gesture_data(const unsigned char *report,
 		retval = syna_tcm_get_touch_data(report, report_size,
 				offset, 16, &data);
 		if (retval < 0) {
-			LOGE("Fail to get object index\n");
+			hbp_err("Fail to get object index\n");
 			return retval;
 		}
 		gesture_data->data[idx++] = (unsigned char)(data & 0xff);
@@ -219,7 +219,7 @@ static int syna_tcm_get_report_data(const unsigned char *touch_report,
 				   bits / 8, bits / 8);
 
 		if (retval < 0) {
-			LOGE("Failed to copy report data\n");
+			hbp_err("Failed to copy report data\n");
 			return retval;
 		}
 
@@ -281,7 +281,7 @@ static int syna_tcm_get_custome_grip_info(const unsigned char *report,
 	unsigned int data_end;
 
 	if (!report) {
-		LOGE("Invalid report data\n");
+		hbp_err("Invalid report data\n");
 		return _EINVAL;
 	}
 
@@ -297,7 +297,7 @@ static int syna_tcm_get_custome_grip_info(const unsigned char *report,
 		retval = syna_tcm_get_touch_data(report, report_size,
 				offset, 16, &data);
 		if (retval < 0) {
-			LOGE("Fail to get object index\n");
+			hbp_err("Fail to get object index\n");
 			return retval;
 		}
 		grip_info->data[idx++] = (unsigned char)(data & 0xff);
@@ -355,34 +355,34 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 	// struct syna_tcm *tcm = container_of(touch_data, struct syna_tcm, tp_data);
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!report) {
-		LOGE("Invalid report data\n");
+		hbp_err("Invalid report data\n");
 		return _EINVAL;
 	}
 
 	if (report_size <= 0) {
-		LOGE("Invalid report data length\n");
+		hbp_err("Invalid report data length\n");
 		return _EINVAL;
 	}
 
 	if (!touch_data) {
-		LOGE("Invalid touch data structure\n");
+		hbp_err("Invalid touch data structure\n");
 		return _EINVAL;
 	}
 
 	if (tcm_dev->max_objects == 0) {
-		LOGE("Invalid max_objects supported\n");
+		hbp_err("Invalid max_objects supported\n");
 		return _EINVAL;
 	}
 
 	object_data = touch_data->object_data;
 
 	if (!object_data) {
-		LOGE("Invalid object_data\n");
+		hbp_err("Invalid object_data\n");
 		return _EINVAL;
 	}
 
@@ -390,7 +390,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 	config_size = tcm_dev->touch_config.data_length;
 
 	if ((!config_data) || (config_size == 0)) {
-		LOGE("Invalid config_data\n");
+		hbp_err("Invalid config_data\n");
 		return _EINVAL;
 	}
 
@@ -407,7 +407,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 	obj = 0;
 	next = 0;
 
-	LOGI("syna_parse_report:%*ph\n", report_size, report);
+	hbp_info("syna_parse_report:%*ph\n", report_size, report);
 
 	while (idx < config_size) {
 		code = config_data[idx++];
@@ -450,7 +450,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get time-stamp\n");
+				hbp_err("Fail to get time-stamp\n");
 				return retval;
 			}
 			touch_data->timestamp = data;
@@ -461,7 +461,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object index\n");
+				hbp_err("Fail to get object index\n");
 				return retval;
 			}
 			obj = data;
@@ -473,7 +473,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object classification\n");
+				hbp_err("Fail to get object classification\n");
 				return retval;
 			}
 			object_data[obj].status = (unsigned char)data;
@@ -484,7 +484,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object x position\n");
+				hbp_err("Fail to get object x position\n");
 				return retval;
 			}
 			object_data[obj].x_pos = data;
@@ -495,7 +495,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object y position\n");
+				hbp_err("Fail to get object y position\n");
 				return retval;
 			}
 			object_data[obj].y_pos = data;
@@ -506,7 +506,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object z\n");
+				hbp_err("Fail to get object z\n");
 				return retval;
 			}
 			object_data[obj].z = data;
@@ -517,7 +517,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object x width\n");
+				hbp_err("Fail to get object x width\n");
 				return retval;
 			}
 			object_data[obj].x_width = data;
@@ -528,7 +528,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object y width\n");
+				hbp_err("Fail to get object y width\n");
 				return retval;
 			}
 			object_data[obj].y_width = data;
@@ -539,7 +539,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object tx position\n");
+				hbp_err("Fail to get object tx position\n");
 				return retval;
 			}
 			object_data[obj].tx_pos = data;
@@ -550,7 +550,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get object rx position\n");
+				hbp_err("Fail to get object rx position\n");
 				return retval;
 			}
 			object_data[obj].rx_pos = data;
@@ -561,7 +561,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get number of active objects\n");
+				hbp_err("Fail to get number of active objects\n");
 				return retval;
 			}
 			active_objects = data;
@@ -580,7 +580,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get 0D buttons state\n");
+				hbp_err("Fail to get 0D buttons state\n");
 				return retval;
 			}
 			touch_data->buttons_state = data;
@@ -599,24 +599,24 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 				touch_data->gesture_id = data;
 				offset += bits;
 				if (touch_data->gesture_id) {
-					LOGI("Gesture ID=%d\n", touch_data->gesture_id/*, tcm->pwr_state, tcm->sub_pwr_state*/);
+					hbp_info("Gesture ID=%d\n", touch_data->gesture_id/*, tcm->pwr_state, tcm->sub_pwr_state*/);
 					// if ((tcm->pwr_state == PWR_ON && tcm->sub_pwr_state == SUB_PWR_RESUME_DONE) &&
 					// 	(touch_data->gesture_id >= DTAP_DETECT && touch_data->gesture_id <= W_UNICODE)) {
 					// 	if (tcm->health_monitor_support) {
 					// 		tp_healthinfo_report(&tcm->monitor_data, HEALTH_REPORT, "report_gesture_event_in_resume_cnt");
 					// 	}
-					// 	LOGE("unexpected gesture id report in resume state\n");
+					// 	hbp_err("unexpected gesture id report in resume state\n");
 					// }//remove by zhongwenjie tmp
 				}
 				if (touch_data->gesture_id == 3) {
-					LOGE("debug syna data: \n");
+					hbp_err("debug syna data: \n");
 					if (report_size > 0) {
-						LOGE("report buf:%*ph\n", report_size, report);
+						hbp_err("report buf:%*ph\n", report_size, report);
 					}
 				}
 			}
 			if (retval < 0) {
-				LOGE("Fail to get gesture id\n");
+				hbp_err("Fail to get gesture id\n");
 				return retval;
 			}
 			break;
@@ -637,7 +637,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 				offset += bits;
 			}
 			if (retval < 0) {
-				LOGE("Fail to get gesture data\n");
+				hbp_err("Fail to get gesture data\n");
 				return retval;
 			}
 			break;
@@ -647,7 +647,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 						      (unsigned int *)(&touch_data->extra_gesture_info[0]));
 
 			if (retval < 0) {
-				LOGE("Failed to get gesture double tap\n");
+				hbp_err("Failed to get gesture double tap\n");
 				return retval;
 			}
 
@@ -660,7 +660,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 						      (unsigned int *)(&touch_data->data_point[0]));
 
 			if (retval < 0) {
-				LOGE("Failed to get gesture double tap\n");
+				hbp_err("Failed to get gesture double tap\n");
 				return retval;
 			}
 
@@ -671,7 +671,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get frame rate\n");
+				hbp_err("Fail to get frame rate\n");
 				return retval;
 			}
 			touch_data->frame_rate = data;
@@ -682,7 +682,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get force measurement data\n");
+				hbp_err("Fail to get force measurement data\n");
 				return retval;
 			}
 			touch_data->force_data = data;
@@ -693,7 +693,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get data for fingerprint area\n");
+				hbp_err("Fail to get data for fingerprint area\n");
 				return retval;
 			}
 			touch_data->fingerprint_area_meet = data;
@@ -704,7 +704,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get power IM\n");
+				hbp_err("Fail to get power IM\n");
 				return retval;
 			}
 			touch_data->power_im = data;
@@ -715,7 +715,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get CID IM\n");
+				hbp_err("Fail to get CID IM\n");
 				return retval;
 			}
 			touch_data->cid_im = data;
@@ -726,7 +726,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get rail IM\n");
+				hbp_err("Fail to get rail IM\n");
 				return retval;
 			}
 			touch_data->rail_im = data;
@@ -737,7 +737,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get CID variance IM\n");
+				hbp_err("Fail to get CID variance IM\n");
 				return retval;
 			}
 			touch_data->cid_variance_im = data;
@@ -748,7 +748,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get NSM frequency\n");
+				hbp_err("Fail to get NSM frequency\n");
 				return retval;
 			}
 			touch_data->nsm_frequency = data;
@@ -759,7 +759,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get NSM state\n");
+				hbp_err("Fail to get NSM state\n");
 				return retval;
 			}
 			touch_data->nsm_state = data;
@@ -770,7 +770,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get cpu cycles info\n");
+				hbp_err("Fail to get cpu cycles info\n");
 				return retval;
 			}
 			touch_data->num_of_cpu_cycles = data;
@@ -781,7 +781,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to detect face\n");
+				hbp_err("Fail to detect face\n");
 				return retval;
 			}
 			touch_data->fd_data = data;
@@ -792,7 +792,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			retval = syna_tcm_get_touch_data(report, report_size,
 					offset, bits, &data);
 			if (retval < 0) {
-				LOGE("Fail to get sensing mode\n");
+				hbp_err("Fail to get sensing mode\n");
 				return retval;
 			}
 			touch_data->sensing_mode = data;
@@ -807,7 +807,7 @@ int syna_tcm_parse_touch_report(struct tcm_dev *tcm_dev,
 			offset += bits;
 
 			if (retval < 0) {
-				LOGE("Fail to get custom gesture info\n");
+				hbp_err("Fail to get custom gesture info\n");
 				return retval;
 			}
 			break;
@@ -860,17 +860,17 @@ int syna_tcm_set_touch_report_config(struct tcm_dev *tcm_dev,
 	unsigned char *data;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!config) || (config_size == 0)) {
-		LOGE("Invalid given config data\n");
+		hbp_err("Invalid given config data\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Not in application fw mode, mode: %d\n",
+		hbp_err("Not in application fw mode, mode: %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -879,13 +879,13 @@ int syna_tcm_set_touch_report_config(struct tcm_dev *tcm_dev,
 	size = syna_pal_le2_to_uint(app_info->max_touch_report_config_size);
 
 	if (config_size > size) {
-		LOGE("Invalid config size: %d (max: %d)\n", config_size, size);
+		hbp_err("Invalid config size: %d (max: %d)\n", config_size, size);
 		return _EINVAL;
 	}
 
 	data = syna_pal_mem_alloc(size, sizeof(unsigned char));
 	if (!data) {
-		LOGE("Fail to allocate memory for touch config setting\n");
+		hbp_err("Fail to allocate memory for touch config setting\n");
 		return _ENOMEM;
 	}
 
@@ -895,7 +895,7 @@ int syna_tcm_set_touch_report_config(struct tcm_dev *tcm_dev,
 			config_size,
 			config_size);
 	if (retval < 0) {
-		LOGE("Fail to copy custom touch config\n");
+		hbp_err("Fail to copy custom touch config\n");
 		goto exit;
 	}
 
@@ -906,11 +906,11 @@ int syna_tcm_set_touch_report_config(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to write command CMD_SET_TOUCH_REPORT_CONFIG\n");
+		hbp_err("Fail to write command CMD_SET_TOUCH_REPORT_CONFIG\n");
 		goto exit;
 	}
 
-	LOGI("Set touch config done\n");
+	hbp_info("Set touch config done\n");
 
 exit:
 	if (data)
@@ -943,12 +943,12 @@ int syna_tcm_preserve_touch_report_config(struct tcm_dev *tcm_dev)
 	unsigned int size = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Not in application fw mode, mode: %d\n",
+		hbp_err("Not in application fw mode, mode: %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -960,7 +960,7 @@ int syna_tcm_preserve_touch_report_config(struct tcm_dev *tcm_dev)
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to write command CMD_GET_TOUCH_REPORT_CONFIG\n");
+		hbp_err("Fail to write command CMD_GET_TOUCH_REPORT_CONFIG\n");
 		goto exit;
 	}
 
@@ -970,7 +970,7 @@ int syna_tcm_preserve_touch_report_config(struct tcm_dev *tcm_dev)
 	retval = syna_tcm_buf_alloc(&tcm_dev->touch_config,
 			size);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for internal touch_config\n");
+		hbp_err("Fail to allocate memory for internal touch_config\n");
 		syna_tcm_buf_unlock(&tcm_dev->resp_buf);
 		goto exit;
 	}
@@ -983,7 +983,7 @@ int syna_tcm_preserve_touch_report_config(struct tcm_dev *tcm_dev)
 			tcm_dev->resp_buf.buf_size,
 			size);
 	if (retval < 0) {
-		LOGE("Fail to clone touch config\n");
+		hbp_err("Fail to clone touch config\n");
 		syna_tcm_buf_unlock(&tcm_dev->touch_config);
 		syna_tcm_buf_unlock(&tcm_dev->resp_buf);
 		goto exit;
@@ -1018,14 +1018,14 @@ int syna_tcm_set_custom_touch_entity_callback(struct tcm_dev *tcm_dev,
 		tcm_custom_touch_entity_callback_t p_cb, void *p_cbdata)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	tcm_dev->cb_custom_touch_entity = p_cb;
 	tcm_dev->cbdata_touch_entity = p_cbdata;
 
-	LOGI("enabled\n");
+	hbp_info("enabled\n");
 
 	return 0;
 }
@@ -1050,14 +1050,14 @@ int syna_tcm_set_custom_gesture_callback(struct tcm_dev *tcm_dev,
 		tcm_custom_gesture_callback_t p_cb, void *p_cbdata)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	tcm_dev->cb_custom_gesture = p_cb;
 	tcm_dev->cbdata_gesture = p_cbdata;
 
-	LOGI("enabled\n");
+	hbp_info("enabled\n");
 
 	return 0;
 }

@@ -251,6 +251,7 @@
 					OPLUS_IC_FUNC_GAUGE_GET_DEC_CV_SOH
 					OPLUS_IC_FUNC_GAUGE_SET_VCT
 					OPLUS_IC_FUNC_GAUGE_GET_VCT
+					OPLUS_IC_FUNC_GAUGE_SET_SEAL_FLAG
 				>;
 				virqs = <
 					OPLUS_IC_VIRQ_ERR
@@ -1156,8 +1157,10 @@
 								 2100 4540 0
 								 1950 4530 1>;
 				strategy_temp_range_t5 =	<2000 4525 0
+								 1750 4515 0
 								 1500 4505 0
-								 1000 4490 1>;
+								 1250 4500 0
+								 1000 4495 1>;
 			};
 		};
 

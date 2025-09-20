@@ -95,7 +95,7 @@ static unsigned int buf_size;
 // 		goto exit;
 // 	}
 
-// 	//LOGI("%s:%*ph\n", (wr_rd == SYNA_SPI_TRANSFER_READ) ? "RD" : "WR", length, data);
+// 	//hbp_info("%s:%*ph\n", (wr_rd == SYNA_SPI_TRANSFER_READ) ? "RD" : "WR", length, data);
 
 // 	offset = 0;
 // 	cnt = snprintf(print_buf + offset, SYNA_SPI_PRINT_BUF_SIZE - offset, "%s ",
@@ -104,7 +104,7 @@ static unsigned int buf_size;
 // 	for (i = 0; i < length; i++) {
 // 		left = SYNA_SPI_PRINT_BUF_SIZE - offset;
 // 		if (left <= SYNA_SPI_PRINT_BUF_LEFT_SIZE) {
-// 			//LOGI("There is unprinted data\n");
+// 			//hbp_info("There is unprinted data\n");
 // 			break;
 // 		}
 // 		cnt = snprintf(print_buf + offset, SYNA_SPI_PRINT_BUF_SIZE - offset, "%02x ", data[i]);
@@ -112,7 +112,7 @@ static unsigned int buf_size;
 // 	}
 // 	cnt = snprintf(print_buf + offset, SYNA_SPI_PRINT_BUF_SIZE - offset, "\n");
 // 	offset += cnt;
-// 	LOGI("%s", print_buf);
+// 	hbp_info("%s", print_buf);
 
 // exit:
 // 	last_code = code;
@@ -138,7 +138,7 @@ static int syna_spi_alloc_mem(unsigned int count, unsigned int size)
 		syna_pal_mem_free((void *)xfer);
 		xfer = syna_pal_mem_alloc(count, sizeof(*xfer));
 		if (!xfer) {
-			LOGE("Fail to allocate memory for xfer\n");
+			hbp_err("Fail to allocate memory for xfer\n");
 			xfer_count = 0;
 			return -ENOMEM;
 		}
@@ -159,13 +159,13 @@ static int syna_spi_alloc_mem(unsigned int count, unsigned int size)
 
 		rx_buf = syna_pal_mem_alloc(size, sizeof(unsigned char));
 		if (!rx_buf) {
-			LOGE("Fail to allocate memory for rx_buf\n");
+			hbp_err("Fail to allocate memory for rx_buf\n");
 			buf_size = 0;
 			return -ENOMEM;
 		}
 		tx_buf = syna_pal_mem_alloc(size, sizeof(unsigned char));
 		if (!tx_buf) {
-			LOGE("Fail to allocate memory for tx_buf\n");
+			hbp_err("Fail to allocate memory for tx_buf\n");
 			buf_size = 0;
 			return -ENOMEM;
 		}
@@ -201,22 +201,22 @@ int syna_tcm_read(struct tcm_dev *tcm_dev,
 	//struct syna_hw_bus_data *bus = &hw_if->bdata_io;
 
 	// if (!spi) {
-	// 	LOGE("Invalid bus io device\n");
+	// 	hbp_err("Invalid bus io device\n");
 	// 	return -ENXIO;
 	// }
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm_dev\n");
+		hbp_err("Invalid tcm_dev\n");
 		return -ENXIO;
 	}
 
 	if (!tcm_dev->bus_ops) {
-		LOGE("Invalid tcm_dev->bus_ops\n");
+		hbp_err("Invalid tcm_dev->bus_ops\n");
 		return -ENXIO;
 	}
 
 	if (!tcm_dev->bus_ops->spi_sync) {
-		LOGE("Invalid tcm_dev->bus_ops->spi_sync\n");
+		hbp_err("Invalid tcm_dev->bus_ops->spi_sync\n");
 		return -ENXIO;
 	}
 
@@ -227,7 +227,7 @@ int syna_tcm_read(struct tcm_dev *tcm_dev,
 
 	retval = syna_spi_alloc_mem(1, rd_len);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory\n");
+		hbp_err("Fail to allocate memory\n");
 		goto exit;
 	}
 /*
@@ -260,16 +260,17 @@ int syna_tcm_read(struct tcm_dev *tcm_dev,
 */
 	retval = tcm_dev->bus_ops->spi_sync(tcm_dev->bus_ops, tx_buf, rx_buf, rd_len);
 	if (retval != 0) {
-		LOGE("Failed to complete SPI transfer, error = %d\n", retval);
+		hbp_err("Failed to complete SPI transfer, error = %d\n", retval);
 		goto exit;
 	}
 	retval = syna_pal_mem_cpy(rd_data, rd_len, rx_buf, rd_len, rd_len);
 	if (retval < 0) {
-		LOGE("Fail to copy rx_buf to rd_data\n");
+		hbp_err("Fail to copy rx_buf to rd_data\n");
 		goto exit;
 	}
 
 	// syna_print_xfer_data(rd_data, rd_len, SYNA_SPI_TRANSFER_READ);
+	LOGD("%s:%*ph\n", "RD", rd_len, rd_data);
 
 	retval = rd_len;
 
@@ -304,7 +305,7 @@ int syna_tcm_write(struct tcm_dev *tcm_dev,
 	//struct syna_hw_bus_data *bus = &hw_if->bdata_io;
 
 	// if (!spi) {
-	// 	LOGE("Invalid bus io device\n");
+	// 	hbp_err("Invalid bus io device\n");
 	// 	return -ENXIO;
 	// }
 
@@ -315,13 +316,13 @@ int syna_tcm_write(struct tcm_dev *tcm_dev,
 	retval = syna_spi_alloc_mem(1, wr_len);
 
 	if (retval < 0) {
-		LOGE("Failed to allocate memory\n");
+		hbp_err("Failed to allocate memory\n");
 		goto exit;
 	}
 
 	retval = syna_pal_mem_cpy(tx_buf, wr_len, wr_data, wr_len, wr_len);
 	if (retval < 0) {
-		LOGE("Fail to copy wr_data to tx_buf\n");
+		hbp_err("Fail to copy wr_data to tx_buf\n");
 		goto exit;
 	}
 /*
@@ -348,11 +349,12 @@ int syna_tcm_write(struct tcm_dev *tcm_dev,
 */
 	retval = tcm_dev->bus_ops->spi_sync(tcm_dev->bus_ops, tx_buf, rx_buf, wr_len);
 	if (retval != 0) {
-		LOGE("Fail to complete SPI transfer, error = %d\n", retval);
+		hbp_err("Fail to complete SPI transfer, error = %d\n", retval);
 		goto exit;
 	}
 
 	// syna_print_xfer_data(wr_data, wr_len, SYNA_SPI_TRANSFER_WRITE);
+	LOGD("%s:%*ph\n", "WR", wr_len, wr_data);
 
 	retval = wr_len;
 
@@ -382,14 +384,14 @@ void syna_tcm_change_resp_read(struct tcm_dev *tcm_dev, unsigned int request)
 	if (request == RESP_IN_ATTN) {
 		tcm_dev->msg_data.default_resp_reading = RESP_IN_ATTN;
 
-		LOGI("Change default resp reading method by attn\n");
+		hbp_info("Change default resp reading method by attn\n");
 	} else {
 		if (request < RESP_IN_POLLING)
 			request = RESP_IN_POLLING;
 
 		tcm_dev->msg_data.default_resp_reading = request;
 
-		LOGI("Change default resp reading method by polling (%dms)\n",
+		hbp_info("Change default resp reading method by polling (%dms)\n",
 			tcm_dev->msg_data.default_resp_reading);
 	}
 }
@@ -418,19 +420,19 @@ static int syna_tcm_init_message_wrap(struct tcm_message_data_blob *tcm_msg,
 
 	/* allocate the completion event for command processing */
 	if (syna_pal_completion_alloc(&tcm_msg->cmd_completion) < 0) {
-		LOGE("Fail to allocate cmd completion event\n");
+		hbp_err("Fail to allocate cmd completion event\n");
 		return _EINVAL;
 	}
 
 	/* allocate the cmd_mutex for command protection */
 	if (syna_pal_mutex_alloc(&tcm_msg->cmd_mutex) < 0) {
-		LOGE("Fail to allocate cmd_mutex\n");
+		hbp_err("Fail to allocate cmd_mutex\n");
 		return _EINVAL;
 	}
 
 	/* allocate the rw_mutex for rw protection */
 	if (syna_pal_mutex_alloc(&tcm_msg->rw_mutex) < 0) {
-		LOGE("Fail to allocate rw_mutex\n");
+		hbp_err("Fail to allocate rw_mutex\n");
 		return _EINVAL;
 	}
 
@@ -447,7 +449,7 @@ static int syna_tcm_init_message_wrap(struct tcm_message_data_blob *tcm_msg,
 	syna_tcm_buf_lock(&tcm_msg->in);
 
 	if (syna_tcm_buf_alloc(&tcm_msg->in, MESSAGE_HEADER_SIZE) < 0) {
-		LOGE("Fail to allocate memory for buf.in (size = %d)\n",
+		hbp_err("Fail to allocate memory for buf.in (size = %d)\n",
 			MESSAGE_HEADER_SIZE);
 		tcm_msg->in.buf_size = 0;
 		tcm_msg->in.data_length = 0;
@@ -460,7 +462,7 @@ static int syna_tcm_init_message_wrap(struct tcm_message_data_blob *tcm_msg,
 
 	tcm_msg->default_resp_reading = resp_reading;
 
-	LOGI("Resp. reading method (default): %s\n",
+	hbp_info("Resp. reading method (default): %s\n",
 		(resp_reading == RESP_IN_ATTN) ? "attn" : "polling");
 
 	/* initialize the features of message handling */
@@ -534,7 +536,7 @@ int syna_tcm_allocate_device(struct tcm_dev **ptcm_dev_ptr, unsigned int resp_re
 			1,
 			sizeof(struct tcm_dev));
 	if (!tcm_dev) {
-		LOGE("Fail to create tcm device handle\n");
+		hbp_err("Fail to create tcm device handle\n");
 		return _ENOMEM;
 	}
 
@@ -566,18 +568,18 @@ int syna_tcm_allocate_device(struct tcm_dev **ptcm_dev_ptr, unsigned int resp_re
 	retval = syna_tcm_init_message_wrap(&tcm_dev->msg_data,
 			resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to initialize command interface\n");
+		hbp_err("Fail to initialize command interface\n");
 		goto err_init_message_wrap;
 	}
 
 	/* return the created device handle */
 	*ptcm_dev_ptr = tcm_dev;
 
-	LOGI("TouchComm core module created, ver.: %d.%02d\n",
+	hbp_info("TouchComm core module created, ver.: %d.%02d\n",
 		(unsigned char)(SYNA_TCM_CORE_LIB_VERSION >> 8),
 		(unsigned char)SYNA_TCM_CORE_LIB_VERSION & 0xff);
 
-	LOGI("Capability: wr_chunk(%d), rd_chunk(%d)\n",
+	hbp_info("Capability: wr_chunk(%d), rd_chunk(%d)\n",
 		tcm_dev->max_wr_size, tcm_dev->max_rd_size);
 
 	return 0;
@@ -610,7 +612,7 @@ err_init_message_wrap:
 void syna_tcm_remove_device(struct tcm_dev *tcm_dev)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return;
 	}
 
@@ -626,7 +628,7 @@ void syna_tcm_remove_device(struct tcm_dev *tcm_dev)
 	/* release the device handle */
 	syna_pal_mem_free((void *)tcm_dev);
 
-	LOGI("tcm device handle removed\n");
+	hbp_info("tcm device handle removed\n");
 }
 
 /**
@@ -647,9 +649,9 @@ static int syna_tcm_detect_protocol(struct tcm_dev *tcm_dev,
 {
 	int retval;
 
-	LOGI("%s is called.\n", __func__);
+	hbp_info("%s is called.\n", __func__);
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -678,7 +680,7 @@ int syna_tcm_detect_device(struct tcm_dev *tcm_dev)
 	unsigned char data[4] = { 0 };
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -688,57 +690,57 @@ int syna_tcm_detect_device(struct tcm_dev *tcm_dev)
 	data[0] = 0x07;
 	retval = syna_tcm_write(tcm_dev, &data[0], 1);
 	if (retval < 0) {
-		LOGE("Fail to write magic to bus\n");
+		hbp_err("Fail to write magic to bus\n");
 		return _EIO;
 	}
 
 	retval = syna_tcm_read(tcm_dev,
 			data, (unsigned int)sizeof(data));
 	if (retval < 0) {
-		LOGE("Fail to retrieve 4-byte data from bus\n");
+		hbp_err("Fail to retrieve 4-byte data from bus\n");
 		return _EIO;
 	}
 
-	LOGI("bare data: %02x %02x %02x %02x\n",
+	hbp_info("bare data: %02x %02x %02x %02x\n",
 			data[0], data[1], data[2], data[3]);
 
 	/* distinguish which tcm version running on the device */
 	retval = syna_tcm_detect_protocol(tcm_dev,
 			data, (unsigned int)sizeof(data));
 	if (retval < 0) {
-		LOGE("Fail to detect TouchCom device, %02x %02x %02x %02x\n",
+		hbp_err("Fail to detect TouchCom device, %02x %02x %02x %02x\n",
 			data[0], data[1], data[2], data[3]);
 		return retval;
 	}
 
 	if ((!tcm_dev->write_message) || (!tcm_dev->read_message)) {
-		LOGE("Invalid TouchCom rw operations\n");
+		hbp_err("Invalid TouchCom rw operations\n");
 		return _ENODEV;
 	}
 
-	LOGI("tcm_dev->dev_mode = 0x%x\n", tcm_dev->dev_mode);
+	hbp_info("tcm_dev->dev_mode = 0x%x\n", tcm_dev->dev_mode);
 
 	/* check the running mode */
 	switch (tcm_dev->dev_mode) {
 	case MODE_APPLICATION_FIRMWARE:
-		LOGI("Device in Application FW, build id: %d, %s\n",
+		hbp_info("Device in Application FW, build id: %d, %s\n",
 			tcm_dev->packrat_number,
 			tcm_dev->id_info.part_number);
 		syna_tcm_get_app_info(tcm_dev, &tcm_dev->app_info);
 		retval = syna_tcm_preserve_touch_report_config(tcm_dev);
 		if (retval < 0) {
-			LOGE("Fail to preserve touch report config\n");
+			hbp_err("Fail to preserve touch report config\n");
 		}
 		break;
 	case MODE_BOOTLOADER:
 	case MODE_TDDI_BOOTLOADER:
-		LOGI("Device in Bootloader\n");
+		hbp_info("Device in Bootloader\n");
 		break;
 	case MODE_ROMBOOTLOADER:
-		LOGI("Device in ROMBoot uBL\n");
+		hbp_info("Device in ROMBoot uBL\n");
 		break;
 	case MODE_MULTICHIP_TDDI_BOOTLOADER:
-		LOGI("Device in multi-chip TDDI Bootloader\n");
+		hbp_info("Device in multi-chip TDDI Bootloader\n");
 		break;
 	default:
 		LOGW("Found TouchCom device, but unsupported mode: 0x%02x\n",
@@ -772,12 +774,12 @@ int syna_tcm_get_event_data(struct tcm_dev *tcm_dev,
 	int retval = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!code) {
-		LOGE("Invalid parameter\n");
+		hbp_err("Invalid parameter\n");
 		return _EINVAL;
 	}
 
@@ -786,7 +788,7 @@ int syna_tcm_get_event_data(struct tcm_dev *tcm_dev,
 	retval = tcm_dev->read_message(tcm_dev,
 			code);
 	if (retval < 0) {
-		LOGE("Fail to read messages\n");
+		hbp_err("Fail to read messages\n");
 		return retval;
 	}
 
@@ -806,7 +808,7 @@ int syna_tcm_get_event_data(struct tcm_dev *tcm_dev,
 
 		retval = syna_tcm_buf_copy(data, &tcm_dev->report_buf);
 		if (retval < 0) {
-			LOGE("Fail to copy data, report type: %x\n", *code);
+			hbp_err("Fail to copy data, report type: %x\n", *code);
 			syna_tcm_buf_unlock(&tcm_dev->report_buf);
 			goto exit;
 		}
@@ -823,7 +825,7 @@ int syna_tcm_get_event_data(struct tcm_dev *tcm_dev,
 
 		retval = syna_tcm_buf_copy(data, &tcm_dev->resp_buf);
 		if (retval < 0) {
-			LOGE("Fail to copy data, status code: %x\n", *code);
+			hbp_err("Fail to copy data, status code: %x\n", *code);
 			syna_tcm_buf_unlock(&tcm_dev->resp_buf);
 			goto exit;
 		}
@@ -856,7 +858,7 @@ int syna_tcm_identify(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -867,7 +869,7 @@ int syna_tcm_identify(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n", CMD_IDENTIFY);
+		hbp_err("Fail to send command 0x%02x\n", CMD_IDENTIFY);
 		goto exit;
 	}
 
@@ -881,12 +883,12 @@ int syna_tcm_identify(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 			MIN(sizeof(*id_info), tcm_dev->resp_buf.data_length));
 	if (retval < 0) {
-		LOGE("Fail to copy identify info to caller\n");
+		hbp_err("Fail to copy identify info to caller\n");
 		goto exit;
 	}
 
 show_info:
-	LOGI("TCM Fw mode: 0x%02x, TCM ver.: %d\n",
+	hbp_info("TCM Fw mode: 0x%02x, TCM ver.: %d\n",
 		tcm_dev->id_info.mode, tcm_dev->id_info.version);
 
 	tcm_dev->dev_mode = tcm_dev->id_info.mode;
@@ -920,7 +922,7 @@ int syna_tcm_reset(struct tcm_dev *tcm_dev)
 	unsigned int resp_handling = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -934,7 +936,7 @@ int syna_tcm_reset(struct tcm_dev *tcm_dev)
 	if (resp_handling != RESP_IN_ATTN) {
 		if (board_setting > resp_handling) {
 			resp_handling = board_setting;
-			LOGI("Use board settings %dms to poll resp of reset\n",
+			hbp_info("Use board settings %dms to poll resp of reset\n",
 				resp_handling);
 		}
 	}
@@ -946,7 +948,7 @@ int syna_tcm_reset(struct tcm_dev *tcm_dev)
 			&resp_code,
 			resp_handling);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n", CMD_RESET);
+		hbp_err("Fail to send command 0x%02x\n", CMD_RESET);
 		goto exit;
 	}
 
@@ -955,7 +957,7 @@ int syna_tcm_reset(struct tcm_dev *tcm_dev)
 	 */
 	tcm_dev->dev_mode = tcm_dev->id_info.mode;
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGI("Device mode 0x%02X running after reset\n",
+		hbp_info("Device mode 0x%02X running after reset\n",
 			tcm_dev->dev_mode);
 	}
 
@@ -985,12 +987,12 @@ int syna_tcm_enable_report(struct tcm_dev *tcm_dev,
 	unsigned char command;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1004,16 +1006,16 @@ int syna_tcm_enable_report(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x to %s 0x%02x report\n",
+		hbp_err("Fail to send command 0x%02x to %s 0x%02x report\n",
 			command, (en)?"enable":"disable", report_code);
 		goto exit;
 	}
 
 	if (resp_code != STATUS_OK) {
-		LOGE("Fail to %s 0x%02x report, resp_code:%x\n",
+		hbp_err("Fail to %s 0x%02x report, resp_code:%x\n",
 			(en) ? "enable" : "disable", report_code, resp_code);
 	} else {
-		LOGD("Report 0x%x %s\n", report_code,
+		hbp_info("Report 0x%x %s\n", report_code,
 			(en) ? "enabled" : "disabled");
 	}
 
@@ -1043,7 +1045,7 @@ static int syna_tcm_run_rom_bootloader_fw(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1054,19 +1056,19 @@ static int syna_tcm_run_rom_bootloader_fw(struct tcm_dev *tcm_dev,
 			&resp_code,
 			fw_switch_delay);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_REBOOT_TO_ROM_BOOTLOADER);
 		goto exit;
 	}
 
 	if (!IS_ROM_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGE("Fail to enter rom bootloader, mode: %x\n",
+		hbp_err("Fail to enter rom bootloader, mode: %x\n",
 			tcm_dev->dev_mode);
 		retval = _ENODEV;
 		goto exit;
 	}
 
-	LOGI("ROM Bootloader (mode 0x%x) activated\n",
+	hbp_info("ROM Bootloader (mode 0x%x) activated\n",
 		tcm_dev->dev_mode);
 
 	retval = 0;
@@ -1097,7 +1099,7 @@ static int syna_tcm_run_bootloader_fw(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1108,19 +1110,19 @@ static int syna_tcm_run_bootloader_fw(struct tcm_dev *tcm_dev,
 			&resp_code,
 			fw_switch_delay);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_RUN_BOOTLOADER_FIRMWARE);
 		goto exit;
 	}
 
 	if (!IS_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGE("Fail to enter bootloader, mode: %x\n",
+		hbp_err("Fail to enter bootloader, mode: %x\n",
 			tcm_dev->dev_mode);
 		retval = _ENODEV;
 		goto exit;
 	}
 
-	LOGI("Bootloader Firmware (mode 0x%x) activated\n",
+	hbp_info("Bootloader Firmware (mode 0x%x) activated\n",
 		tcm_dev->dev_mode);
 
 	retval = 0;
@@ -1151,7 +1153,7 @@ static int syna_tcm_run_application_fw(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1162,7 +1164,7 @@ static int syna_tcm_run_application_fw(struct tcm_dev *tcm_dev,
 			&resp_code,
 			fw_switch_delay);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_RUN_APPLICATION_FIRMWARE);
 		goto exit;
 	}
@@ -1174,7 +1176,7 @@ static int syna_tcm_run_application_fw(struct tcm_dev *tcm_dev,
 		goto exit;
 	}
 
-	LOGI("Application Firmware (mode 0x%x) activated\n",
+	hbp_info("Application Firmware (mode 0x%x) activated\n",
 		tcm_dev->dev_mode);
 
 	retval = 0;
@@ -1203,7 +1205,7 @@ int syna_tcm_switch_fw_mode(struct tcm_dev *tcm_dev,
 	int retval = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1212,7 +1214,7 @@ int syna_tcm_switch_fw_mode(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_run_application_fw(tcm_dev,
 				fw_switch_delay);
 		if (retval < 0) {
-			LOGE("Fail to switch to application mode\n");
+			hbp_err("Fail to switch to application mode\n");
 			goto exit;
 		}
 		break;
@@ -1223,7 +1225,7 @@ int syna_tcm_switch_fw_mode(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_run_bootloader_fw(tcm_dev,
 				fw_switch_delay);
 		if (retval < 0) {
-			LOGE("Fail to switch to bootloader mode\n");
+			hbp_err("Fail to switch to bootloader mode\n");
 			goto exit;
 		}
 		break;
@@ -1231,12 +1233,12 @@ int syna_tcm_switch_fw_mode(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_run_rom_bootloader_fw(tcm_dev,
 				fw_switch_delay);
 		if (retval < 0) {
-			LOGE("Fail to switch to rom bootloader mode\n");
+			hbp_err("Fail to switch to rom bootloader mode\n");
 			goto exit;
 		}
 		break;
 	default:
-		LOGE("Invalid firmware mode requested\n");
+		hbp_err("Invalid firmware mode requested\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -1269,7 +1271,7 @@ int syna_tcm_get_boot_info(struct tcm_dev *tcm_dev,
 	unsigned int copy_size;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1280,7 +1282,7 @@ int syna_tcm_get_boot_info(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_GET_BOOT_INFO);
 		goto exit;
 	}
@@ -1295,7 +1297,7 @@ int syna_tcm_get_boot_info(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 			copy_size);
 	if (retval < 0) {
-		LOGE("Fail to copy boot info\n");
+		hbp_err("Fail to copy boot info\n");
 		goto exit;
 	}
 
@@ -1309,7 +1311,7 @@ int syna_tcm_get_boot_info(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 			copy_size);
 	if (retval < 0) {
-		LOGE("Fail to copy boot info to caller\n");
+		hbp_err("Fail to copy boot info to caller\n");
 		goto exit;
 	}
 
@@ -1341,25 +1343,23 @@ int syna_tcm_get_app_info(struct tcm_dev *tcm_dev,
 	struct tcm_application_info *info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
-LOGI("%s 1\n", __func__);
 	retval = tcm_dev->write_message(tcm_dev,
 			CMD_GET_APPLICATION_INFO,
 			NULL,
 			0,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
-LOGI("%s 2\n", __func__);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_GET_APPLICATION_INFO);
 		goto exit;
 	}
@@ -1367,7 +1367,6 @@ LOGI("%s 2\n", __func__);
 	resp_data_len = tcm_dev->resp_buf.data_length;
 	copy_size = MIN(sizeof(tcm_dev->app_info), resp_data_len);
 
-LOGI("%s 3\n", __func__);
 	info = &tcm_dev->app_info;
 
 	/* save the app_info */
@@ -1376,9 +1375,8 @@ LOGI("%s 3\n", __func__);
 			tcm_dev->resp_buf.buf,
 			tcm_dev->resp_buf.buf_size,
 			copy_size);
-LOGI("%s 4\n", __func__);
 	if (retval < 0) {
-		LOGE("Fail to copy application info\n");
+		hbp_err("Fail to copy application info\n");
 		goto exit;
 	}
 
@@ -1392,26 +1390,23 @@ LOGI("%s 4\n", __func__);
 			tcm_dev->resp_buf.buf_size,
 			copy_size);
 	if (retval < 0) {
-		LOGE("Fail to copy application info to caller\n");
+		hbp_err("Fail to copy application info to caller\n");
 		goto exit;
 	}
-LOGI("%s 5\n", __func__);
 
 show_info:
 	app_status = syna_pal_le2_to_uint(tcm_dev->app_info.status);
 
-LOGI("%s 6\n", __func__);
 	if (app_status == APP_STATUS_BAD_APP_CONFIG) {
-		LOGE("Bad application firmware, status: 0x%x\n", app_status);
+		hbp_err("Bad application firmware, status: 0x%x\n", app_status);
 		retval = _ENODEV;
 		goto exit;
 	} else if (app_status != APP_STATUS_OK) {
-		LOGE("Incorrect application status, 0x%x\n", app_status);
+		hbp_err("Incorrect application status, 0x%x\n", app_status);
 		retval = _ENODEV;
 		goto exit;
 	}
 
-LOGI("%s 7\n", __func__);
 	tcm_dev->max_objects = syna_pal_le2_to_uint(info->max_objects);
 	tcm_dev->max_x = syna_pal_le2_to_uint(info->max_x);
 	tcm_dev->max_y = syna_pal_le2_to_uint(info->max_y);
@@ -1424,14 +1419,13 @@ LOGI("%s 7\n", __func__);
 			MAX_SIZE_CONFIG_ID,
 			MAX_SIZE_CONFIG_ID);
 
-LOGI("%s 8\n", __func__);
 	if (!tcm_dev->max_objects) {
-		LOGE("Invalid max_objects: %d\n", tcm_dev->max_objects);
+		hbp_err("Invalid max_objects: %d\n", tcm_dev->max_objects);
 		tcm_dev->max_objects = MAX_NUM_OBJECTS;
 	}
-	LOGI("App info version: %d, status: %d\n",
+	hbp_info("App info version: %d, status: %d\n",
 		syna_pal_le2_to_uint(info->version), app_status);
-	LOGI("App info: max_objs: %d, max_x:%d, max_y: %d, img: %dx%d\n",
+	hbp_info("App info: max_objs: %d, max_x:%d, max_y: %d, img: %dx%d\n",
 		tcm_dev->max_objects, tcm_dev->max_x, tcm_dev->max_y,
 		tcm_dev->rows, tcm_dev->cols);
 
@@ -1464,12 +1458,12 @@ int syna_tcm_get_static_config(struct tcm_dev *tcm_dev,
 	struct tcm_application_info *app_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1479,7 +1473,7 @@ int syna_tcm_get_static_config(struct tcm_dev *tcm_dev,
 	size = syna_pal_le2_to_uint(app_info->static_config_size);
 
 	if (size > buf_size) {
-		LOGE("Invalid buffer input, given size: %d (actual: %d)\n",
+		hbp_err("Invalid buffer input, given size: %d (actual: %d)\n",
 			buf_size, size);
 		return _EINVAL;
 	}
@@ -1491,7 +1485,7 @@ int syna_tcm_get_static_config(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_GET_STATIC_CONFIG);
 		goto exit;
 	}
@@ -1506,7 +1500,7 @@ int syna_tcm_get_static_config(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 			tcm_dev->resp_buf.data_length);
 	if (retval < 0) {
-		LOGE("Fail to copy static config data to caller\n");
+		hbp_err("Fail to copy static config data to caller\n");
 		goto exit;
 	}
 
@@ -1540,12 +1534,12 @@ int syna_tcm_set_static_config(struct tcm_dev *tcm_dev,
 	struct tcm_application_info *app_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1555,7 +1549,7 @@ int syna_tcm_set_static_config(struct tcm_dev *tcm_dev,
 	size = syna_pal_le2_to_uint(app_info->static_config_size);
 
 	if (size != config_data_size) {
-		LOGE("Invalid static config size, given: %d (actual: %d)\n",
+		hbp_err("Invalid static config size, given: %d (actual: %d)\n",
 			config_data_size, size);
 		return _EINVAL;
 	}
@@ -1567,7 +1561,7 @@ int syna_tcm_set_static_config(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_SET_STATIC_CONFIG);
 		goto exit;
 	}
@@ -1602,12 +1596,12 @@ int syna_tcm_get_dynamic_config(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1621,21 +1615,21 @@ int syna_tcm_get_dynamic_config(struct tcm_dev *tcm_dev,
 			&resp_code,
 			delay_ms_resp);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x to get dynamic field 0x%x\n",
+		hbp_err("Fail to send command 0x%02x to get dynamic field 0x%x\n",
 			CMD_GET_DYNAMIC_CONFIG, (unsigned char)id);
 		goto exit;
 	}
 
 	/* return dynamic config data */
 	if (tcm_dev->resp_buf.data_length < 2) {
-		LOGE("Invalid resp data size, %d\n",
+		hbp_err("Invalid resp data size, %d\n",
 			tcm_dev->resp_buf.data_length);
 		goto exit;
 	}
 
 	*value = (unsigned short)syna_pal_le2_to_uint(tcm_dev->resp_buf.buf);
 
-	LOGD("Get %d from dynamic field 0x%x\n", *value, id);
+	hbp_info("Get %d from dynamic field 0x%x\n", *value, id);
 
 	retval = 0;
 
@@ -1668,17 +1662,17 @@ int syna_tcm_set_dynamic_config(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
 
-	LOGI("Set %d to dynamic field 0x%x\n", value, id);
+	hbp_info("Set %d to dynamic field 0x%x\n", value, id);
 
 	out[0] = (unsigned char)id;
 	out[1] = (unsigned char)value;
@@ -1691,7 +1685,7 @@ int syna_tcm_set_dynamic_config(struct tcm_dev *tcm_dev,
 			&resp_code,
 			delay_ms_resp);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x to set %d to field 0x%x\n",
+		hbp_err("Fail to send command 0x%02x to set %d to field 0x%x\n",
 			CMD_SET_DYNAMIC_CONFIG, value, (unsigned char)id);
 		goto exit;
 	}
@@ -1720,12 +1714,12 @@ int syna_tcm_rezero(struct tcm_dev *tcm_dev)
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1737,7 +1731,7 @@ int syna_tcm_rezero(struct tcm_dev *tcm_dev)
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_REZERO);
 		goto exit;
 	}
@@ -1769,12 +1763,12 @@ int syna_tcm_set_config_id(struct tcm_dev *tcm_dev,
 	unsigned int config_id_len = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1782,7 +1776,7 @@ int syna_tcm_set_config_id(struct tcm_dev *tcm_dev,
 	config_id_len = sizeof(tcm_dev->app_info.customer_config_id);
 
 	if (size != config_id_len) {
-		LOGE("Invalid config id input, given size: %d (%d)\n",
+		hbp_err("Invalid config id input, given size: %d (%d)\n",
 			size, config_id_len);
 		return _EINVAL;
 	}
@@ -1794,7 +1788,7 @@ int syna_tcm_set_config_id(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_SET_CONFIG_ID);
 		goto exit;
 	}
@@ -1824,7 +1818,7 @@ int syna_tcm_sleep(struct tcm_dev *tcm_dev, bool en)
 	unsigned char command;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1837,7 +1831,7 @@ int syna_tcm_sleep(struct tcm_dev *tcm_dev, bool en)
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%x\n", command);
+		hbp_err("Fail to send command 0x%x\n", command);
 		goto exit;
 	}
 
@@ -1866,12 +1860,12 @@ int syna_tcm_get_features(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1883,7 +1877,7 @@ int syna_tcm_get_features(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_GET_FEATURES);
 		goto exit;
 	}
@@ -1898,7 +1892,7 @@ int syna_tcm_get_features(struct tcm_dev *tcm_dev,
 		tcm_dev->resp_buf.buf_size,
 		MIN(sizeof(*info), tcm_dev->resp_buf.data_length));
 	if (retval < 0) {
-		LOGE("Fail to copy features_info to caller\n");
+		hbp_err("Fail to copy features_info to caller\n");
 		goto exit;
 	}
 
@@ -1930,12 +1924,12 @@ int syna_tcm_run_production_test(struct tcm_dev *tcm_dev,
 	unsigned char test_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (IS_NOT_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in application fw mode, mode: %x\n",
+		hbp_err("Device is not in application fw mode, mode: %x\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1949,7 +1943,7 @@ int syna_tcm_run_production_test(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_PRODUCTION_TEST);
 		goto exit;
 	}
@@ -1960,7 +1954,7 @@ int syna_tcm_run_production_test(struct tcm_dev *tcm_dev,
 	/* copy testing data to caller */
 	retval = syna_tcm_buf_copy(tdata, &tcm_dev->resp_buf);
 	if (retval < 0) {
-		LOGE("Fail to copy testing data\n");
+		hbp_err("Fail to copy testing data\n");
 		goto exit;
 	}
 exit:
@@ -1992,12 +1986,12 @@ int syna_tcm_send_command(struct tcm_dev *tcm_dev,
 	int retval = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!code) {
-		LOGE("Invalid parameter\n");
+		hbp_err("Invalid parameter\n");
 		return _EINVAL;
 	}
 
@@ -2008,9 +2002,9 @@ int syna_tcm_send_command(struct tcm_dev *tcm_dev,
 			code,
 			delay_ms_resp);
 	if (retval < 0)
-		LOGE("Fail to run command 0x%02x\n", command);
+		hbp_err("Fail to run command 0x%02x\n", command);
 
-	LOGD("Status code returned: 0x%02x\n", *code);
+	hbp_info("Status code returned: 0x%02x\n", *code);
 
 	/* exit if no buffer provided */
 	if (!resp)
@@ -2024,7 +2018,7 @@ int syna_tcm_send_command(struct tcm_dev *tcm_dev,
 		syna_tcm_buf_lock(&tcm_dev->report_buf);
 
 		if (syna_tcm_buf_copy(resp, &tcm_dev->report_buf) < 0) {
-			LOGE("Fail to copy data, report type: %x\n",
+			hbp_err("Fail to copy data, report type: %x\n",
 				*code);
 			syna_tcm_buf_unlock(&tcm_dev->report_buf);
 			retval = _ENOMEM;
@@ -2042,7 +2036,7 @@ int syna_tcm_send_command(struct tcm_dev *tcm_dev,
 		syna_tcm_buf_lock(&tcm_dev->resp_buf);
 
 		if (syna_tcm_buf_copy(resp, &tcm_dev->resp_buf) < 0) {
-			LOGE("Fail to copy resp data, status code: %x\n",
+			hbp_err("Fail to copy resp data, status code: %x\n",
 				*code);
 			syna_tcm_buf_unlock(&tcm_dev->resp_buf);
 			retval = _ENOMEM;
@@ -2072,14 +2066,14 @@ exit:
 int syna_tcm_enable_predict_reading(struct tcm_dev *tcm_dev, bool en)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	tcm_dev->msg_data.predict_reads = en;
 	tcm_dev->msg_data.predict_length = 0;
 
-	LOGI("Predicted reading is %s\n",
+	hbp_info("Predicted reading is %s\n",
 		(en) ? "enabled":"disabled");
 
 	return 0;
@@ -2099,7 +2093,7 @@ int syna_tcm_enable_predict_reading(struct tcm_dev *tcm_dev, bool en)
 unsigned short syna_tcm_get_message_crc(struct tcm_dev *tcm_dev)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -2120,7 +2114,7 @@ unsigned short syna_tcm_get_message_crc(struct tcm_dev *tcm_dev)
 unsigned char syna_tcm_get_extra_rc_byte(struct tcm_dev *tcm_dev)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -2144,14 +2138,14 @@ int syna_tcm_set_reset_occurrence_callback(struct tcm_dev *tcm_dev,
 		tcm_reset_occurrence_callback_t p_cb, void *p_cbdata)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	tcm_dev->cb_reset_occurrence = p_cb;
 	tcm_dev->cbdata_reset = p_cbdata;
 
-	LOGI("enabled\n");
+	hbp_info("enabled\n");
 
 	return 0;
 }

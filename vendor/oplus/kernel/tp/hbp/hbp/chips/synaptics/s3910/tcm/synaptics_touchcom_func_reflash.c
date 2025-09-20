@@ -76,38 +76,38 @@ static int syna_tcm_set_up_flash_access(struct tcm_dev *tcm_dev,
 	unsigned int wr_chunk;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
-	LOGI("Set up flash access\n");
+	hbp_info("Set up flash access\n");
 
 	retval = syna_tcm_identify(tcm_dev, &id_info);
 	if (retval < 0) {
-		LOGE("Fail to do identification\n");
+		hbp_err("Fail to do identification\n");
 		return retval;
 	}
 
 	/* switch to bootloader mode */
 	if (IS_APP_FW_MODE(id_info.mode)) {
-		LOGI("Prepare to enter bootloader mode\n");
+		hbp_info("Prepare to enter bootloader mode\n");
 
 		retval = syna_tcm_switch_fw_mode(tcm_dev,
 				MODE_BOOTLOADER,
 				FW_MODE_SWITCH_DELAY_MS);
 		if (retval < 0) {
-			LOGE("Fail to enter bootloader mode\n");
+			hbp_err("Fail to enter bootloader mode\n");
 			return retval;
 		}
 	}
 
 	if (!IS_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGE("Fail to enter bootloader mode (current: 0x%x)\n",
+		hbp_err("Fail to enter bootloader mode (current: 0x%x)\n",
 			tcm_dev->dev_mode);
 		return retval;
 	}
@@ -117,7 +117,7 @@ static int syna_tcm_set_up_flash_access(struct tcm_dev *tcm_dev,
 	/* get boot info to set up the flash access */
 	retval = syna_tcm_get_boot_info(tcm_dev, boot_info);
 	if (retval < 0) {
-		LOGE("Fail to get boot info at mode 0x%x\n",
+		hbp_err("Fail to get boot info at mode 0x%x\n",
 			id_info.mode);
 		return retval;
 	}
@@ -127,35 +127,35 @@ static int syna_tcm_set_up_flash_access(struct tcm_dev *tcm_dev,
 	temp = boot_info->write_block_size_words;
 	reflash_data->write_block_size = temp * 2;
 
-	LOGI("Write block size: %d (words size: %d)\n",
+	hbp_info("Write block size: %d (words size: %d)\n",
 		reflash_data->write_block_size, temp);
 
 	temp = syna_pal_le2_to_uint(boot_info->erase_page_size_words);
 	reflash_data->page_size = temp * 2;
 
-	LOGI("Erase page size: %d (words size: %d)\n",
+	hbp_info("Erase page size: %d (words size: %d)\n",
 		reflash_data->page_size, temp);
 
 	temp = syna_pal_le2_to_uint(boot_info->max_write_payload_size);
 	reflash_data->max_write_payload_size = temp;
 
-	LOGI("Max write flash data size: %d\n",
+	hbp_info("Max write flash data size: %d\n",
 		reflash_data->max_write_payload_size);
 
 	if (reflash_data->write_block_size > (wr_chunk - 9)) {
-		LOGE("Write block size, %d, greater than chunk space, %d\n",
+		hbp_err("Write block size, %d, greater than chunk space, %d\n",
 			reflash_data->write_block_size, (wr_chunk - 9));
 		return _EINVAL;
 	}
 
 	if (reflash_data->write_block_size == 0) {
-		LOGE("Invalid write block size %d\n",
+		hbp_err("Invalid write block size %d\n",
 			reflash_data->write_block_size);
 		return _EINVAL;
 	}
 
 	if (reflash_data->page_size == 0) {
-		LOGE("Invalid erase page size %d\n",
+		hbp_err("Invalid erase page size %d\n",
 			reflash_data->page_size);
 		return _EINVAL;
 	}
@@ -193,19 +193,19 @@ int syna_tcm_compare_image_id_info(struct tcm_dev *tcm_dev,
 	result = UPDATE_NONE;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash_data\n");
+		hbp_err("Invalid reflash_data\n");
 		return _EINVAL;
 	}
 
 	app_config = &reflash_data->image_info.data[AREA_APP_CONFIG];
 
 	if (app_config->size < sizeof(struct app_config_header)) {
-		LOGE("Invalid application config in image file\n");
+		hbp_err("Invalid application config in image file\n");
 		return _EINVAL;
 	}
 
@@ -278,17 +278,17 @@ static int syna_tcm_check_flash_boot_config(struct block_data *boot_config,
 	unsigned int device_addr;
 
 	if (!boot_config) {
-		LOGE("Invalid boot_config block data\n");
+		hbp_err("Invalid boot_config block data\n");
 		return _EINVAL;
 	}
 
 	if (!boot_info) {
-		LOGE("Invalid boot_info\n");
+		hbp_err("Invalid boot_info\n");
 		return _EINVAL;
 	}
 
 	if (boot_config->size < BOOT_CONFIG_SIZE) {
-		LOGE("No valid BOOT_CONFIG size, %d, in image file\n",
+		hbp_err("No valid BOOT_CONFIG size, %d, in image file\n",
 			boot_config->size);
 		return _EINVAL;
 	}
@@ -331,12 +331,12 @@ static int syna_tcm_check_flash_app_config(struct block_data *app_config,
 	unsigned int device_size;
 
 	if (!app_config) {
-		LOGE("Invalid app_config block data\n");
+		hbp_err("Invalid app_config block data\n");
 		return _EINVAL;
 	}
 
 	if (!app_info) {
-		LOGE("Invalid app_info\n");
+		hbp_err("Invalid app_info\n");
 		return _EINVAL;
 	}
 
@@ -398,12 +398,12 @@ static int syna_tcm_check_flash_disp_config(struct block_data *disp_config,
 	unsigned int device_size;
 
 	if (!disp_config) {
-		LOGE("Invalid disp_config block data\n");
+		hbp_err("Invalid disp_config block data\n");
 		return _EINVAL;
 	}
 
 	if (!boot_info) {
-		LOGE("Invalid boot_info\n");
+		hbp_err("Invalid boot_info\n");
 		return _EINVAL;
 	}
 
@@ -455,7 +455,7 @@ static int syna_tcm_check_flash_disp_config(struct block_data *disp_config,
 static int syna_tcm_check_flash_app_code(struct block_data *app_code)
 {
 	if (!app_code) {
-		LOGE("Invalid app_code block data\n");
+		hbp_err("Invalid app_code block data\n");
 		return _EINVAL;
 	}
 
@@ -483,7 +483,7 @@ static int syna_tcm_check_flash_app_code(struct block_data *app_code)
 static int syna_tcm_check_flash_openshort(struct block_data *open_short)
 {
 	if (!open_short) {
-		LOGE("Invalid open_short block data\n");
+		hbp_err("Invalid open_short block data\n");
 		return _EINVAL;
 	}
 
@@ -512,7 +512,7 @@ static int syna_tcm_check_flash_openshort(struct block_data *open_short)
 static int syna_tcm_check_flash_app_prod_test(struct block_data *prod_test)
 {
 	if (!prod_test) {
-		LOGE("Invalid app_prod_test block data\n");
+		hbp_err("Invalid app_prod_test block data\n");
 		return _EINVAL;
 	}
 
@@ -541,7 +541,7 @@ static int syna_tcm_check_flash_app_prod_test(struct block_data *prod_test)
 static int syna_tcm_check_flash_ppdt(struct block_data *ppdt)
 {
 	if (!ppdt) {
-		LOGE("Invalid ppdt block data\n");
+		hbp_err("Invalid ppdt block data\n");
 		return _EINVAL;
 	}
 
@@ -579,17 +579,17 @@ static int syna_tcm_check_flash_block(struct tcm_dev *tcm_dev,
 	struct tcm_boot_info *boot_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return DO_NONE;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return DO_NONE;
 	}
 
 	if (!block) {
-		LOGE("Invalid block data\n");
+		hbp_err("Invalid block data\n");
 		return DO_NONE;
 	}
 
@@ -652,7 +652,7 @@ static int syna_tcm_get_flash_data_location(struct tcm_dev *tcm_dev,
 	unsigned char payload;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -673,7 +673,7 @@ static int syna_tcm_get_flash_data_location(struct tcm_dev *tcm_dev,
 		payload = FLASH_OPEN_SHORT_TUNING_DATA;
 		break;
 	default:
-		LOGE("Invalid flash area %d\n", area);
+		hbp_err("Invalid flash area %d\n", area);
 		return _EINVAL;
 	}
 
@@ -684,13 +684,13 @@ static int syna_tcm_get_flash_data_location(struct tcm_dev *tcm_dev,
 			&resp_code,
 			tcm_dev->msg_data.default_resp_reading);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n",
+		hbp_err("Fail to send command 0x%02x\n",
 			CMD_GET_DATA_LOCATION);
 		goto exit;
 	}
 
 	if (tcm_dev->resp_buf.data_length != 4) {
-		LOGE("Invalid data length %d\n",
+		hbp_err("Invalid data length %d\n",
 			tcm_dev->resp_buf.data_length);
 		retval = _EINVAL;
 		goto exit;
@@ -728,12 +728,12 @@ static int syna_tcm_reflash_send_command(struct tcm_dev *tcm_dev,
 	unsigned char resp_code;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!IS_BOOTLOADER_MODE(tcm_dev->dev_mode)) {
-		LOGE("Device is not in BL mode, 0x%x\n", tcm_dev->dev_mode);
+		hbp_err("Device is not in BL mode, 0x%x\n", tcm_dev->dev_mode);
 		retval = _EINVAL;
 	}
 
@@ -744,7 +744,7 @@ static int syna_tcm_reflash_send_command(struct tcm_dev *tcm_dev,
 			&resp_code,
 			delay_ms_resp);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x\n", command);
+		hbp_err("Fail to send command 0x%02x\n", command);
 		goto exit;
 	}
 
@@ -784,17 +784,17 @@ static int syna_tcm_read_flash(struct tcm_dev *tcm_dev,
 	unsigned int delay_ms = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid rd_data buffer\n");
+		hbp_err("Invalid rd_data buffer\n");
 		return _EINVAL;
 	}
 
 	if (address == 0 || rd_len == 0) {
-		LOGE("Invalid flash address and length\n");
+		hbp_err("Invalid flash address and length\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -830,13 +830,13 @@ static int syna_tcm_read_flash(struct tcm_dev *tcm_dev,
 			sizeof(out),
 			delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to read flash data from addr 0x%x, size %d\n",
+		hbp_err("Fail to read flash data from addr 0x%x, size %d\n",
 			address, rd_len);
 		goto exit;
 	}
 
 	if (tcm_dev->resp_buf.data_length != rd_len) {
-		LOGE("Fail to read requested length %d, rd_len %d\n",
+		hbp_err("Fail to read requested length %d, rd_len %d\n",
 			tcm_dev->resp_buf.data_length, rd_len);
 		retval = _EIO;
 		goto exit;
@@ -848,7 +848,7 @@ static int syna_tcm_read_flash(struct tcm_dev *tcm_dev,
 			tcm_dev->resp_buf.buf_size,
 			rd_len);
 	if (retval < 0) {
-		LOGE("Fail to copy read data, size %d\n", rd_len);
+		hbp_err("Fail to copy read data, size %d\n", rd_len);
 		goto exit;
 	}
 
@@ -881,24 +881,24 @@ static int syna_tcm_read_flash_boot_config(struct tcm_dev *tcm_dev,
 	struct tcm_boot_info *boot_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid read data buffer\n");
+		hbp_err("Invalid read data buffer\n");
 		return _EINVAL;
 	}
 
 	boot_info = &tcm_dev->boot_info;
 
 	if (IS_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("BOOT_CONFIG not available in app fw mode %d\n",
+		hbp_err("BOOT_CONFIG not available in app fw mode %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -908,7 +908,7 @@ static int syna_tcm_read_flash_boot_config(struct tcm_dev *tcm_dev,
 	length = BOOT_CONFIG_SIZE * BOOT_CONFIG_SLOTS;
 
 	if (addr == 0 || length == 0) {
-		LOGE("BOOT_CONFIG data area unavailable\n");
+		hbp_err("BOOT_CONFIG data area unavailable\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -917,14 +917,14 @@ static int syna_tcm_read_flash_boot_config(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_buf_alloc(rd_data, length);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for rd_data buffer\n");
+		hbp_err("Fail to allocate memory for rd_data buffer\n");
 		goto exit;
 	}
 
 	retval = syna_tcm_read_flash(tcm_dev, addr, rd_data->buf,
 			length, rd_delay_us);
 	if (retval < 0) {
-		LOGE("Fail to read BOOT_CONFIG area (addr: 0x%x, length: %d)\n",
+		hbp_err("Fail to read BOOT_CONFIG area (addr: 0x%x, length: %d)\n",
 			addr, length);
 		goto exit;
 	}
@@ -960,24 +960,24 @@ static int syna_tcm_read_flash_app_config(struct tcm_dev *tcm_dev,
 	struct tcm_application_info *app_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid read data buffer\n");
+		hbp_err("Invalid read data buffer\n");
 		return _EINVAL;
 	}
 
 	app_info = &tcm_dev->app_info;
 
 	if (IS_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("APP_CONFIG not available in app fw mode %d\n",
+		hbp_err("APP_CONFIG not available in app fw mode %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -987,7 +987,7 @@ static int syna_tcm_read_flash_app_config(struct tcm_dev *tcm_dev,
 	length = VALUE(app_info->app_config_size);
 
 	if (addr == 0 || length == 0) {
-		LOGE("APP_CONFIG data area unavailable\n");
+		hbp_err("APP_CONFIG data area unavailable\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -996,14 +996,14 @@ static int syna_tcm_read_flash_app_config(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_buf_alloc(rd_data, length);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for rd_data buffer\n");
+		hbp_err("Fail to allocate memory for rd_data buffer\n");
 		goto exit;
 	}
 
 	retval = syna_tcm_read_flash(tcm_dev, addr, rd_data->buf,
 			length, rd_delay_us);
 	if (retval < 0) {
-		LOGE("Fail to read APP_CONFIG area (addr: 0x%x, length: %d)\n",
+		hbp_err("Fail to read APP_CONFIG area (addr: 0x%x, length: %d)\n",
 			addr, length);
 		goto exit;
 	}
@@ -1039,24 +1039,24 @@ static int syna_tcm_read_flash_disp_config(struct tcm_dev *tcm_dev,
 	struct tcm_boot_info *boot_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid read data buffer\n");
+		hbp_err("Invalid read data buffer\n");
 		return _EINVAL;
 	}
 
 	boot_info = &tcm_dev->boot_info;
 
 	if (IS_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("DISP_CONFIG not available in app fw mode %d\n",
+		hbp_err("DISP_CONFIG not available in app fw mode %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1067,7 +1067,7 @@ static int syna_tcm_read_flash_disp_config(struct tcm_dev *tcm_dev,
 	length = temp * reflash_data->write_block_size;
 
 	if (addr == 0 || length == 0) {
-		LOGE("DISP_CONFIG data area unavailable\n");
+		hbp_err("DISP_CONFIG data area unavailable\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -1076,14 +1076,14 @@ static int syna_tcm_read_flash_disp_config(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_buf_alloc(rd_data, length);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for rd_data buffer\n");
+		hbp_err("Fail to allocate memory for rd_data buffer\n");
 		goto exit;
 	}
 
 	retval = syna_tcm_read_flash(tcm_dev, addr, rd_data->buf,
 			length, rd_delay_us);
 	if (retval < 0) {
-		LOGE("Fail to read DISP_CONFIG area (addr: 0x%x, length: %d)\n",
+		hbp_err("Fail to read DISP_CONFIG area (addr: 0x%x, length: %d)\n",
 			addr, length);
 		goto exit;
 	}
@@ -1119,24 +1119,24 @@ static int syna_tcm_read_flash_custom_otp(struct tcm_dev *tcm_dev,
 	struct tcm_boot_info *boot_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid read data buffer\n");
+		hbp_err("Invalid read data buffer\n");
 		return _EINVAL;
 	}
 
 	boot_info = &tcm_dev->boot_info;
 
 	if (IS_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("CUSTOM_OTP not available in app fw mode %d\n",
+		hbp_err("CUSTOM_OTP not available in app fw mode %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1147,7 +1147,7 @@ static int syna_tcm_read_flash_custom_otp(struct tcm_dev *tcm_dev,
 	length = temp * reflash_data->write_block_size;
 
 	if (addr == 0 || length == 0) {
-		LOGE("CUSTOM_OTP data area unavailable\n");
+		hbp_err("CUSTOM_OTP data area unavailable\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -1156,14 +1156,14 @@ static int syna_tcm_read_flash_custom_otp(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_buf_alloc(rd_data, length);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for rd_data buffer\n");
+		hbp_err("Fail to allocate memory for rd_data buffer\n");
 		goto exit;
 	}
 
 	retval = syna_tcm_read_flash(tcm_dev, addr, rd_data->buf,
 			length, rd_delay_us);
 	if (retval < 0) {
-		LOGE("Fail to read CUSTOM_OTP area (addr: 0x%x, length: %d)\n",
+		hbp_err("Fail to read CUSTOM_OTP area (addr: 0x%x, length: %d)\n",
 			addr, length);
 		goto exit;
 	}
@@ -1200,22 +1200,22 @@ static int syna_tcm_read_flash_custom_data(struct tcm_dev *tcm_dev,
 	unsigned int length = 0;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid read data buffer\n");
+		hbp_err("Invalid read data buffer\n");
 		return _EINVAL;
 	}
 
 	if (IS_APP_FW_MODE(tcm_dev->dev_mode)) {
-		LOGE("Custom data not available in app fw mode %d\n",
+		hbp_err("Custom data not available in app fw mode %d\n",
 			tcm_dev->dev_mode);
 		return _EINVAL;
 	}
@@ -1224,7 +1224,7 @@ static int syna_tcm_read_flash_custom_data(struct tcm_dev *tcm_dev,
 	length = size * reflash_data->write_block_size;
 
 	if (addr == 0 || length == 0) {
-		LOGE("Custom data area unavailable\n");
+		hbp_err("Custom data area unavailable\n");
 		retval = _EINVAL;
 		goto exit;
 	}
@@ -1233,14 +1233,14 @@ static int syna_tcm_read_flash_custom_data(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_buf_alloc(rd_data, length);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for rd_data buffer\n");
+		hbp_err("Fail to allocate memory for rd_data buffer\n");
 		goto exit;
 	}
 
 	retval = syna_tcm_read_flash(tcm_dev, addr, rd_data->buf,
 			length, rd_delay_us);
 	if (retval < 0) {
-		LOGE("Fail to read custom data (addr: 0x%x, length: %d)\n",
+		hbp_err("Fail to read custom data (addr: 0x%x, length: %d)\n",
 			addr, length);
 		goto exit;
 	}
@@ -1276,12 +1276,12 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 	struct tcm_reflash_data_blob reflash_data;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!rd_data) {
-		LOGE("Invalid data buffer\n");
+		hbp_err("Invalid data buffer\n");
 		return _EINVAL;
 	}
 
@@ -1294,7 +1294,7 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_get_flash_data_location(tcm_dev,
 				area, &addr, &length);
 		if (retval < 0) {
-			LOGE("Fail to get data location of 0x%x\n", area);
+			hbp_err("Fail to get data location of 0x%x\n", area);
 			return retval;
 		}
 		break;
@@ -1305,7 +1305,7 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 	retval = syna_tcm_set_up_flash_access(tcm_dev,
 			&reflash_data);
 	if (retval < 0) {
-		LOGE("Fail to set up flash access\n");
+		hbp_err("Fail to set up flash access\n");
 		return retval;
 	}
 
@@ -1316,7 +1316,7 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_read_flash_boot_config(tcm_dev,
 				&reflash_data, rd_data, rd_delay_us);
 		if (retval < 0) {
-			LOGE("Fail to get boot config data\n");
+			hbp_err("Fail to get boot config data\n");
 			goto exit;
 		}
 		break;
@@ -1324,7 +1324,7 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_read_flash_app_config(tcm_dev,
 				&reflash_data, rd_data, rd_delay_us);
 		if (retval < 0) {
-			LOGE("Fail to get app config data\n");
+			hbp_err("Fail to get app config data\n");
 			goto exit;
 		}
 		break;
@@ -1332,7 +1332,7 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_read_flash_disp_config(tcm_dev,
 				&reflash_data, rd_data, rd_delay_us);
 		if (retval < 0) {
-			LOGE("Fail to get disp config data\n");
+			hbp_err("Fail to get disp config data\n");
 			goto exit;
 		}
 		break;
@@ -1340,7 +1340,7 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_read_flash_custom_otp(tcm_dev,
 				&reflash_data, rd_data, rd_delay_us);
 		if (retval < 0) {
-			LOGE("Fail to get custom otp data\n");
+			hbp_err("Fail to get custom otp data\n");
 			goto exit;
 		}
 		break;
@@ -1354,12 +1354,12 @@ int syna_tcm_read_flash_area(struct tcm_dev *tcm_dev,
 				rd_delay_us);
 		break;
 	default:
-		LOGE("Invalid data area\n");
+		hbp_err("Invalid data area\n");
 		retval = _EINVAL;
 		goto exit;
 	}
 
-	LOGI("%s read\n", AREA_ID_STR(area));
+	hbp_info("%s read\n", AREA_ID_STR(area));
 
 	retval = 0;
 
@@ -1368,7 +1368,7 @@ exit:
 			MODE_APPLICATION_FIRMWARE,
 			FW_MODE_SWITCH_DELAY_MS);
 	if (retval < 0)
-		LOGE("Fail to go back to application firmware\n");
+		hbp_err("Fail to go back to application firmware\n");
 
 	syna_tcm_buf_release(&reflash_data.out);
 
@@ -1413,7 +1413,7 @@ static int syna_tcm_write_flash(struct tcm_dev *tcm_dev,
 	unsigned int delay_ms;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1438,7 +1438,7 @@ static int syna_tcm_write_flash(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_buf_alloc(&reflash_data->out,
 				xfer_length + 2);
 		if (retval < 0) {
-			LOGE("Fail to allocate memory for buf.out\n");
+			hbp_err("Fail to allocate memory for buf.out\n");
 			syna_tcm_buf_unlock(&reflash_data->out);
 			return retval;
 		}
@@ -1454,7 +1454,7 @@ static int syna_tcm_write_flash(struct tcm_dev *tcm_dev,
 				wr_len - offset,
 				xfer_length);
 		if (retval < 0) {
-			LOGE("Fail to copy write data ,size: %d\n",
+			hbp_err("Fail to copy write data ,size: %d\n",
 				xfer_length);
 			syna_tcm_buf_unlock(&reflash_data->out);
 			return retval;
@@ -1478,7 +1478,7 @@ static int syna_tcm_write_flash(struct tcm_dev *tcm_dev,
 				xfer_length + 2,
 				delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to write data to flash addr 0x%x, size %d\n",
+			hbp_err("Fail to write data to flash addr 0x%x, size %d\n",
 				flash_address, xfer_length + 2);
 			syna_tcm_buf_unlock(&reflash_data->out);
 			return retval;
@@ -1520,17 +1520,17 @@ static int syna_tcm_write_flash_block(struct tcm_dev *tcm_dev,
 	const unsigned char *data;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!block) {
-		LOGE("Invalid block data\n");
+		hbp_err("Invalid block data\n");
 		return _EINVAL;
 	}
 
@@ -1542,14 +1542,14 @@ static int syna_tcm_write_flash_block(struct tcm_dev *tcm_dev,
 		AREA_ID_STR(block->id), flash_addr, size);
 
 	if (size == 0) {
-		LOGI("No need to update, size = %d\n", size);
+		hbp_info("No need to update, size = %d\n", size);
 		goto exit;
 	}
 
 	retval = syna_tcm_write_flash(tcm_dev, reflash_data,
 			flash_addr, data, size, wr_delay_us);
 	if (retval < 0) {
-		LOGE("Fail to write %s to flash (addr: 0x%x, size: %d)\n",
+		hbp_err("Fail to write %s to flash (addr: 0x%x, size: %d)\n",
 			AREA_ID_STR(block->id), flash_addr, size);
 		return retval;
 	}
@@ -1618,7 +1618,7 @@ static int syna_tcm_erase_flash(struct tcm_dev *tcm_dev,
 			size_erase_cmd,
 			erase_delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to erase data at flash page 0x%x, count %d\n",
+		hbp_err("Fail to erase data at flash page 0x%x, count %d\n",
 			page_start, page_count);
 		return retval;
 	}
@@ -1651,17 +1651,17 @@ static int syna_tcm_erase_flash_block(struct tcm_dev *tcm_dev,
 	unsigned int flash_addr;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!block) {
-		LOGE("Invalid block data\n");
+		hbp_err("Invalid block data\n");
 		return _EINVAL;
 	}
 
@@ -1676,14 +1676,14 @@ static int syna_tcm_erase_flash_block(struct tcm_dev *tcm_dev,
 		AREA_ID_STR(block->id), flash_addr, size);
 
 	if (size == 0) {
-		LOGI("No need to erase, size = %d\n", size);
+		hbp_info("No need to erase, size = %d\n", size);
 		goto exit;
 	}
 
 	retval = syna_tcm_erase_flash(tcm_dev, reflash_data,
 			flash_addr, size, delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to erase %s data (addr: 0x%x, size: %d)\n",
+		hbp_err("Fail to erase %s data (addr: 0x%x, size: %d)\n",
 			AREA_ID_STR(block->id), flash_addr, size);
 		return retval;
 	}
@@ -1720,17 +1720,17 @@ static int syna_tcm_update_flash_block(struct tcm_dev *tcm_dev,
 	unsigned int wr_blk_delay_ms = delay_ms & 0xFFFF;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash data blob\n");
+		hbp_err("Invalid reflash data blob\n");
 		return _EINVAL;
 	}
 
 	if (!block) {
-		LOGE("Invalid block data\n");
+		hbp_err("Invalid block data\n");
 		return _EINVAL;
 	}
 
@@ -1739,7 +1739,7 @@ static int syna_tcm_update_flash_block(struct tcm_dev *tcm_dev,
 			reflash_data,
 			block);
 	if (retval < 0) {
-		LOGE("Invalid %s area\n", AREA_ID_STR(block->id));
+		hbp_err("Invalid %s area\n", AREA_ID_STR(block->id));
 		return retval;
 	}
 
@@ -1753,7 +1753,7 @@ static int syna_tcm_update_flash_block(struct tcm_dev *tcm_dev,
 			block,
 			erase_delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to erase %s area\n", AREA_ID_STR(block->id));
+		hbp_err("Fail to erase %s area\n", AREA_ID_STR(block->id));
 		return retval;
 	}
 
@@ -1764,7 +1764,7 @@ static int syna_tcm_update_flash_block(struct tcm_dev *tcm_dev,
 			block,
 			wr_blk_delay_ms);
 	if (retval < 0) {
-		LOGE("Fail to write %s area\n", AREA_ID_STR(block->id));
+		hbp_err("Fail to write %s area\n", AREA_ID_STR(block->id));
 		return retval;
 	}
 
@@ -1800,19 +1800,19 @@ static int syna_tcm_do_reflash_tddi(struct tcm_dev *tcm_dev,
 	struct block_data *block;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash_data blob\n");
+		hbp_err("Invalid reflash_data blob\n");
 		return _EINVAL;
 	}
 
 	image_info = &reflash_data->image_info;
 
 	if (tcm_dev->dev_mode != MODE_TDDI_BOOTLOADER) {
-		LOGE("Incorrect bootloader mode, 0x%02x, expected: 0x%02x\n",
+		hbp_err("Incorrect bootloader mode, 0x%02x, expected: 0x%02x\n",
 			tcm_dev->dev_mode, MODE_TDDI_BOOTLOADER);
 		return _EINVAL;
 	}
@@ -1841,7 +1841,7 @@ static int syna_tcm_do_reflash_tddi(struct tcm_dev *tcm_dev,
 				block,
 				erase_delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to erase %s area\n", AREA_ID_STR(block->id));
+			hbp_err("Fail to erase %s area\n", AREA_ID_STR(block->id));
 			goto exit;
 		}
 	}
@@ -1867,7 +1867,7 @@ static int syna_tcm_do_reflash_tddi(struct tcm_dev *tcm_dev,
 			block,
 			wr_blk_delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to update %s area\n",
+			hbp_err("Fail to update %s area\n",
 				AREA_ID_STR(block->id));
 			goto exit;
 		}
@@ -1904,17 +1904,17 @@ static int syna_tcm_do_reflash_generic(struct tcm_dev *tcm_dev,
 	struct block_data *block;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if (!reflash_data) {
-		LOGE("Invalid reflash_data blob\n");
+		hbp_err("Invalid reflash_data blob\n");
 		return _EINVAL;
 	}
 
 	if (tcm_dev->dev_mode != MODE_BOOTLOADER) {
-		LOGE("Incorrect bootloader mode, 0x%02x, expected: 0x%02x\n",
+		hbp_err("Incorrect bootloader mode, 0x%02x, expected: 0x%02x\n",
 			tcm_dev->dev_mode, MODE_BOOTLOADER);
 		return _EINVAL;
 	}
@@ -1928,7 +1928,7 @@ static int syna_tcm_do_reflash_generic(struct tcm_dev *tcm_dev,
 				block,
 				wait_delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to update application firmware\n");
+			hbp_err("Fail to update application firmware\n");
 			goto exit;
 		}
 
@@ -1939,7 +1939,7 @@ static int syna_tcm_do_reflash_generic(struct tcm_dev *tcm_dev,
 				block,
 				wait_delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to update application config\n");
+			hbp_err("Fail to update application config\n");
 			goto exit;
 		}
 		break;
@@ -1951,7 +1951,7 @@ static int syna_tcm_do_reflash_generic(struct tcm_dev *tcm_dev,
 				block,
 				wait_delay_ms);
 		if (retval < 0) {
-			LOGE("Fail to update application config\n");
+			hbp_err("Fail to update application config\n");
 			goto exit;
 		}
 		break;
@@ -1993,12 +1993,12 @@ int syna_tcm_do_fw_update(struct tcm_dev *tcm_dev,
 	int app_status;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!image) || (image_size == 0)) {
-		LOGE("Invalid image data\n");
+		hbp_err("Invalid image data\n");
 		return _EINVAL;
 	}
 
@@ -2013,7 +2013,7 @@ int syna_tcm_do_fw_update(struct tcm_dev *tcm_dev,
 
 	retval = syna_tcm_parse_fw_image(image, &reflash_data.image_info);
 	if (retval < 0) {
-		LOGE("Fail to parse firmware image\n");
+		hbp_err("Fail to parse firmware image\n");
 		return retval;
 	}
 
@@ -2050,7 +2050,7 @@ reflash:
 	/* set up flash access, and enter the bootloader mode */
 	retval = syna_tcm_set_up_flash_access(tcm_dev, &reflash_data);
 	if (retval < 0) {
-		LOGE("Fail to set up flash access\n");
+		hbp_err("Fail to set up flash access\n");
 		goto exit;
 	}
 
@@ -2066,13 +2066,13 @@ reflash:
 			type,
 			wait_delay_ms);
 	} else {
-		LOGE("Incorrect bootloader mode, 0x%02x\n",
+		hbp_err("Incorrect bootloader mode, 0x%02x\n",
 			tcm_dev->dev_mode);
 		goto reset;
 	}
 
 	if (retval < 0) {
-		LOGE("Fail to do firmware update\n");
+		hbp_err("Fail to do firmware update\n");
 		goto reset;
 	}
 
@@ -2082,7 +2082,7 @@ reflash:
 reset:
 	retval = syna_tcm_reset(tcm_dev);
 	if (retval < 0) {
-		LOGE("Fail to do reset\n");
+		hbp_err("Fail to do reset\n");
 		goto exit;
 	}
 

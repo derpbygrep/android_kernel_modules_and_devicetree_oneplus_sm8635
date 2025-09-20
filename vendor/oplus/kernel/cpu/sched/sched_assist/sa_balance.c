@@ -12,7 +12,9 @@
 #include "sa_common.h"
 #include "sa_fair.h"
 #include "sa_balance.h"
-
+#if defined(CONFIG_HMBIRD_SCHED)
+#include "sa_hmbird.h"
+#endif
 /*
  * When the following macros are enabled, some debug information
  * will be output, which is very helpful for finding bugs.
@@ -1099,7 +1101,8 @@ bool ux_need_up_migration(struct task_struct *p, struct rq *rq)
  *                          with smaller capacity to CPUs with larger capacity.
  * TICKPULL_MIGR_RUNNABLE : pull long-runnable tasks from other CPUs. Unlike
  *                          TICKPULL_MIGR_RUNNING, tasks can be migrated to
- *                          CPUs with the same capacity.
+ *                          CPUs with the same capacity  or little util tasks
+ *                          can been migrated to small cores.
  */
 enum migr_type {
 	DOWN_MIGR = 1,
@@ -1182,7 +1185,7 @@ enum migr_type {
  *
  * TICKPULL_MIGR_RUNNABLE
  * cur_idx    order_idx   walk_cnt
- *    0            0          1
+ *    0            0          3    (only little util task can been migrated to small cores)
  *    1            1          3
  *    2            2          1
  *
@@ -1268,10 +1271,14 @@ bool calc_order_idx(enum migr_type type,
 		break;
 	case TICKPULL_MIGR_RUNNABLE:
 		*order_idx = curr_cls;
-		if ((cls_nr >= 3) && (curr_cls == cls_nr-2)) {
-			*walk_cnt = cls_nr;
-		} else {
+		/*
+		 * When curr_cls is biggest cores, only allow pull other biggest cores' task to it,
+		 * meanwhile, will allow sliver cores to pull other cores' task to it after ajust the logic.
+		 */
+		if (curr_cls == cls_nr-1) {
 			*walk_cnt = 1;
+		} else {
+			*walk_cnt = cls_nr;
 		}
 		break;
 	default:
@@ -1989,6 +1996,7 @@ static noinline bool oplus_migrate_runnable_ux(void *data, struct rq *rq)
 	unsigned int this_cpu = cpu_of(rq);
 	int new_cpu = -1;
 	bool ret = false;
+	bool ux_cls_boost = false;
 
 	/*
 	 * Pick a ux_task that has been in the runnable state for a long time.
@@ -2001,6 +2009,11 @@ static noinline bool oplus_migrate_runnable_ux(void *data, struct rq *rq)
 	 * Choose a suitable cpu for this ux_task.
 	 */
 	new_cpu = find_cpu_in_migration(ux_task, this_cpu, NORMAL_MIGR, false);
+	if (new_cpu < 0) {
+		ux_cls_boost = get_task_cls_for_scene(ux_task) > 0 ? true : false;
+		if (!ux_cls_boost && !is_task_util_over(ux_task, BOOST_THRESHOLD_UNIT))
+			new_cpu = find_cpu_in_migration(ux_task, this_cpu, DOWN_MIGR, false);
+	}
 	if (new_cpu < 0)
 		return false;
 
@@ -2414,6 +2427,15 @@ static noinline bool oplus_tickpull_runnable_rt(void *data,
 				continue;
 			}
 
+			/*
+			 * Just allow big cores' <light util> rt task can been pulled to sliver core.
+			 */
+			if (cur_cls == 0 && topology_cluster_id(iter_cpu) > 0 &&
+				is_task_util_over(rt_task, BOOST_THRESHOLD_UNIT)) {
+				rq_unlock(busiest_rq, &rf);
+				continue;
+			}
+
 #ifdef DEBUG_LB_RT_TICK
 			trace_printk("OPLUS_LB_TICKPULL[%d]: this_cpu=%d, curr=%s$%d, "
 				"busiest_cpu=%d, rt_task=%s$%d,\n",
@@ -2694,6 +2716,15 @@ static noinline bool oplus_tickpull_runnable_ux(void *data, struct rq *rq)
 			}
 
 			/*
+			 * Just allow big cores' <light util && no ux_boost> ux task can been pulled to sliver core.
+			 */
+			if (cur_cls == 0 && topology_cluster_id(iter_cpu) > 0 &&
+				(is_task_util_over(iter_task, BOOST_THRESHOLD_UNIT) || get_task_cls_for_scene(iter_task) > 0)) {
+				rq_unlock(iter_rq, &rf);
+				continue;
+			}
+
+			/*
 			 * Ha, ux_task can be migrated to this_cpu to perform enqueue
 			 * and dequeue operations.
 			 */
@@ -2730,6 +2761,11 @@ bool __oplus_tick_balance(void *data, struct rq *rq)
 {
 	if (unlikely(!lb_enable))
 		return false;
+
+#if defined(CONFIG_HMBIRD_SCHED)
+	if (test_task_is_hmbird(rq->curr))
+		return false;
+#endif
 
 #ifdef DEBUG_LB_TEST
 	lb_test_tick();
@@ -3662,6 +3698,10 @@ bool __oplus_newidle_balance(void *data, struct rq *this_rq,
 	if (unlikely(!lb_enable))
 		return false;
 
+#if defined(CONFIG_HMBIRD_SCHED)
+	if (test_task_is_hmbird(this_rq->curr))
+		return false;
+#endif
 	/*
 	 * Do not pull tasks towards unavailable cpus.
 	 */

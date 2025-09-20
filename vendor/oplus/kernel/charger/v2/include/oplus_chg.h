@@ -3,6 +3,7 @@
 
 #include <linux/version.h>
 #include "oplus_chg_symbol.h"
+#include <linux/rtc.h>
 
 extern int oplus_log_level;
 
@@ -333,7 +334,6 @@ struct oplus_gauge_lifetime {
 #define OTG_ENABLE_PENDING	BIT(2)
 #define USB_RESERVE3		BIT(3)
 #define USB_RESERVE4		BIT(4)
-#define USB_LPD_DETECT		BIT(5)
 #define WLS_CONNECT_PENDING	BIT(16)
 #define WLS_RESERVE17		BIT(17)
 #define USB_DONOT_USE		BIT(31)

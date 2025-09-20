@@ -33,6 +33,7 @@ static int __init game_ctrl_init(void)
 	}
 
 	cpu_load_init();
+	frame_load_init();
 	cpufreq_limits_init();
 	early_detect_init();
 	task_util_init();

@@ -907,9 +907,8 @@ static void oplus_cpa_subscribe_wired_topic(struct oplus_mms *topic, void *prv_d
 	}
 
 	oplus_mms_get_item_data(cpa->wired_topic, WIRED_ITEM_ONLINE, &data, true);
-	cpa->wired_online = !!data.intval;
-	if (cpa->wired_online)
-		schedule_work(&cpa->chg_type_change_work);
+	if (data.intval)
+		schedule_work(&cpa->wired_online_work);
 	oplus_mms_get_item_data(cpa->wired_topic, WIRED_ITEM_PRESENT, &data, true);
 	cpa->wired_present = !!data.intval;
 	if (!cpa->wired_present)
@@ -1151,6 +1150,8 @@ static void oplus_cpa_retention_subs_callback(struct mms_subscribe *subs,
 			cpa->retention_state = !!data.intval;
 			if (cpa->retention_state)
 				cpa->pre_retention_state = cpa->retention_state;
+			if (cpa->wired_present && !cpa->retention_state)
+				cpa->pre_retention_state = false;
 			break;
 		case RETENTION_ITEM_STATE_READY:
 			cpa->retention_state_ready = true;
@@ -1358,7 +1359,6 @@ static int oplus_cpa_parse_dt(struct oplus_cpa *cpa)
 	uint32_t data, power;
 	u8 pps_region_list[PPS_REGION_COUNT_MAX];
 	int len;
-	uint32_t wait_data, wait_time;
 
 	if (oplus_cpa_regionid_from_cmdline(cpa) && cpa->region_id != DEFAULT_REGION_ID) {
 		chg_info("region_id = 0x%02x", cpa->region_id);
@@ -1470,47 +1470,6 @@ FOUND_NODE:
 				chg_err("oplus,default_protocol_list index %d data error, data=%u\n", i, data);
 			else
 				cpa->default_protocol_type |= BIT(data);
-		}
-	}
-
-	/* not necessary for every project*/
-	num = of_property_count_elems_of_size(node, "oplus,protocol_wait_list", sizeof(uint32_t));
-	if (num < 0) {
-		chg_err("read oplus,protocol_wait_list failed, rc=%d\n", num);
-		num = 0;
-	} else if ((num >> 1) > CHG_PROTOCOL_MAX) {
-		chg_err("too many items in \"oplus,protocol_wait_list\"\n");
-		num = CHG_PROTOCOL_MAX;
-		cpa->protocol_wait_support = true;
-	} else {
-		num /= 2;
-		cpa->protocol_wait_support = true;
-	}
-	cpa->protocol_wait_cnt = num;
-
-	for (i = 0; i < cpa->protocol_wait_cnt; i++) {
-		cpa->protocol_wait_table[i].type = CHG_PROTOCOL_INVALID;
-		cpa->protocol_wait_table[i].time = PROTOCAL_WAIT_TIMEOUT_MS;
-		rc = of_property_read_u32_index(node, "oplus,protocol_wait_list", i * 2, &wait_data);
-		if (rc < 0) {
-			chg_err("read oplus,protocol_wait_list index %d failed, rc=%d\n", i * 2, rc);
-			continue;
-		} else {
-			if (wait_data >= CHG_PROTOCOL_MAX) {
-				chg_err("oplus,protocol_wait_list index %d wait_data error, wait_data=%u\n", i, wait_data);
-				continue;
-			} else {
-				cpa->protocol_wait_table[i].type = wait_data;
-			}
-		}
-
-		rc = of_property_read_u32_index(node, "oplus,protocol_wait_list", i * 2 + 1, &wait_time);
-		if (rc < 0) {
-			chg_err("read oplus,protocol_wait_list index %d failed, rc=%d\n", i * 2 + 1, rc);
-			cpa->protocol_prio_table[i].type = CHG_PROTOCOL_INVALID;
-			continue;
-		} else {
-			cpa->protocol_wait_table[i].time = wait_time;
 		}
 	}
 

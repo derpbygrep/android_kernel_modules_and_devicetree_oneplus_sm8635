@@ -20,8 +20,15 @@ static int syna_dev_read(void *priv, char *data, int32_t len)
 static int syna_spi_sync(void *priv, char *tx, char *rx, int32_t len)
 {
 	struct syna_tcm *tcm_hcd = (struct syna_tcm *)priv;
+	int ret = 0;
 
-	return tcm_hcd->bus_ops->spi_sync(tcm_hcd->bus_ops, tx, rx, len);
+	LOGD("%s:%*ph\n", "WR", len, tx);
+
+	ret = tcm_hcd->bus_ops->spi_sync(tcm_hcd->bus_ops, tx, rx, len);
+
+	LOGD("%s:%*ph\n", "RD", len, rx);
+
+	return ret;
 }
 
 static int syna_get_frame(void *priv, u8 *raw, u32 rawsize)
@@ -33,12 +40,12 @@ static int syna_get_frame(void *priv, u8 *raw, u32 rawsize)
 	unsigned int total_size = 0;
 
 	if (!raw) {
-		LOGE("raw is NULL\n");
+		hbp_err("raw is NULL\n");
 		return -1;
 	}
 
 	if (!tcm_hcd->probe_done) {
-		LOGE("probe not done\n");
+		hbp_err("probe not done\n");
 		return -1;
 	}
 
@@ -49,7 +56,7 @@ static int syna_get_frame(void *priv, u8 *raw, u32 rawsize)
 	// 		&tcm_hcd->status_report_code,
 	// 		&tcm_hcd->event_data);
 	// if (retval < 0) {
-	// 	LOGE("Fail to get event data\n");
+	// 	hbp_err("Fail to get event data\n");
 	// 	return -1;
 	// }
 /*
@@ -76,7 +83,7 @@ static int syna_get_frame(void *priv, u8 *raw, u32 rawsize)
 				tcm_hcd->tcm_dev->external_buf.data_length,
 				tcm_hcd->tcm_dev->external_buf.data_length);
 		if (retval < 0) {
-			LOGE("Fail to copy data to buffer, size: %d\n",
+			hbp_err("Fail to copy data to buffer, size: %d\n",
 				tcm_hcd->tcm_dev->external_buf.data_length);
 			return -1;
 		}
@@ -104,7 +111,7 @@ static int syna_get_frame(void *priv, u8 *raw, u32 rawsize)
 				tcm->event_data.data_length,
 				&tcm->tp_data);
 		if (retval < 0) {
-			LOGE("Fail to parse touch report\n");
+			hbp_err("Fail to parse touch report\n");
 			goto exit;
 		}
 		syna_dev_report_input_events(tcm);
@@ -119,7 +126,12 @@ static int syna_get_irq_reason(void *priv, enum irq_reason *reason)
 	int retval = 0;
 
 	if (!tcm_hcd->probe_done) {
-		LOGE("probe not done\n");
+		hbp_err("probe not done\n");
+		return -1;
+	}
+
+	if (tcm_hcd->char_dev_irq_disabled) {
+		hbp_err("char dev irq is disabled\n");
 		return -1;
 	}
 
@@ -130,12 +142,22 @@ static int syna_get_irq_reason(void *priv, enum irq_reason *reason)
 			&tcm_hcd->status_report_code,
 			&tcm_hcd->event_data);
 	if (retval < 0) {
-		LOGE("Fail to get event data\n");
+		hbp_err("Fail to get event data\n");
 		return -1;
 	}
 
-	if (tcm_hcd->status_report_code < REPORT_IDENTIFY)
+	if (tcm_hcd->status_report_code == REPORT_IDENTIFY) {
+		hbp_info("Received REPORT_IDENTIFY, device has been reset.\n");
+		*reason = IRQ_REASON_RESET_IDENTIFY;
+	} else if (tcm_hcd->status_report_code == REPORT_TOUCH) {
+		hbp_info("Received LBP touch report, please check mode correct or not.\n");
+		*reason = IRQ_REASON_LBP_POINTS_REPORT;
+	} else if (tcm_hcd->status_report_code < REPORT_IDENTIFY
+			|| tcm_hcd->status_report_code == REPORT_DELTA
+			|| tcm_hcd->status_report_code == REPORT_RAW
+			|| tcm_hcd->status_report_code == REPORT_DEBUG) {
 		*reason = IRQ_REASON_RESPONSE;
+	}
 
 	return 0;
 }
@@ -147,7 +169,12 @@ static int syna_get_gesture(void *priv, struct gesture_info *gesture)
 	int retval = 0;
 
 	if (!tcm_hcd->probe_done) {
-		LOGE("probe not done\n");
+		hbp_err("probe not done\n");
+		return -1;
+	}
+
+	if (tcm_hcd->char_dev_irq_disabled) {
+		hbp_err("char dev irq is disabled\n");
 		return -1;
 	}
 
@@ -157,7 +184,7 @@ static int syna_get_gesture(void *priv, struct gesture_info *gesture)
 	// 		&tcm_hcd->status_report_code,
 	// 		&tcm_hcd->event_data);
 	// if (retval < 0) {
-	// 	LOGE("Fail to get event data\n");
+	// 	hbp_err("Fail to get event data\n");
 	// 	return -1;
 	// }
 
@@ -338,7 +365,12 @@ static int syna_get_touch_points(void *priv, struct point_info *points)
 	struct tcm_objects_data_blob *object_data;
 
 	if (!tcm_hcd->probe_done) {
-		LOGE("probe not done\n");
+		hbp_err("probe not done\n");
+		return -1;
+	}
+
+	if (tcm_hcd->char_dev_irq_disabled) {
+		hbp_err("char dev irq is disabled\n");
 		return -1;
 	}
 
@@ -348,7 +380,7 @@ static int syna_get_touch_points(void *priv, struct point_info *points)
 	// 		&tcm_hcd->status_report_code,
 	// 		&tcm_hcd->event_data);
 	// if (retval < 0) {
-	// 	LOGE("Fail to get event data\n");
+	// 	hbp_err("Fail to get event data\n");
 	// 	return -1;
 	// }
 	//if (tcm_hcd->status_report_code == REPORT_TOUCH) {
@@ -366,8 +398,8 @@ static int syna_get_touch_points(void *priv, struct point_info *points)
 		case FINGER:
 		case GLOVED_OBJECT:
 			points[idx].status = 1;
-			points[idx].x = object_data[idx].x_pos;
-			points[idx].y = object_data[idx].y_pos;
+			points[idx].x = object_data[idx].x_pos * INPUT_RESOLUTION_NUM / 10;
+			points[idx].y = object_data[idx].y_pos * INPUT_RESOLUTION_NUM / 10;
 			points[idx].touch_major = object_data[idx].x_width;
 			points[idx].width_major = object_data[idx].y_width;
 			obj_attention = obj_attention | (1 << idx);
@@ -390,10 +422,10 @@ int syna_enable_hbp_mode(void *priv, bool en)
 	// retval = syna_tcm_enable_report(tcm->tcm_dev,
 	// 		 REPORT_TOUCH, false);
 	// if (retval < 0) {
-	//      LOGE("Fail to disalbe HBP Active Frame report\n");
+	//      hbp_err("Fail to disalbe HBP Active Frame report\n");
 	//      goto exit;
 	// }
-hbp_info("%s start, en=%u\n", __func__, en);
+	hbp_info("%s start, en=%u\n", __func__, en);
 	/* disable LBP mode: 2-LBP(default),1-HBP */
 	if (!en) {
 		retval = syna_tcm_set_dynamic_config(tcm->tcm_dev,
@@ -401,21 +433,21 @@ hbp_info("%s start, en=%u\n", __func__, en);
 				en ? 0x01 : 0x02,
 				RESP_IN_ATTN);
 		if (retval < 0) {
-			LOGE("Fail to disable LBP mode via DC command\n");
+			hbp_err("Fail to disable LBP mode via DC command\n");
 			goto exit;
 		}
 
 		/* enable log report to detect fw enter/exit force doze mode */
 		retval = syna_tcm_enable_report(tcm->tcm_dev, REPORT_LOG, true);
 		if (retval < 0) {
-			LOGE("Failed to enable log report\n");
+			hbp_err("Failed to enable log report\n");
 			goto exit;
 		}
 		hbp_info("Enable log report\n");
 	}
 	//tcm->hbp_enabled = true;
 
-hbp_info("%s end\n", __func__);
+	hbp_info("%s end\n", __func__);
 exit:
 	return retval;
 }
@@ -449,7 +481,7 @@ static int syna_dev_probe(struct platform_device *pdev)
 
 	ret = syna_tcm_allocate_device(&tcm_dev, RESP_IN_POLLING);
 	if ((ret < 0) || (!tcm_dev)) {
-		LOGE("Fail to allocate TouchCom device handle\n");
+		hbp_err("Fail to allocate TouchCom device handle\n");
 		kfree(tcm_hcd);
 		return -ENOMEM;
 	}
@@ -474,6 +506,13 @@ static int syna_dev_probe(struct platform_device *pdev)
 	syna_tcm_buf_init(&tcm_hcd->event_data);
 	//fhp_chip_debug_init(fts);
 
+	/* create the device file and register to char device classes */
+	ret = syna_cdev_create_sysfs(tcm_hcd, pdev);
+	if (ret < 0) {
+		hbp_err("Fail to create the device sysfs\n");
+		goto err_exit;
+	}
+
 	syna_tcm_detect_device(tcm_hcd->tcm_dev);
 
 	tcm_hcd->probe_done = true;
@@ -486,6 +525,7 @@ err_exit:
 
 static int syna_dev_remove(struct platform_device *pdev)
 {
+	//syna_cdev_remove_sysfs(struct syna_tcm *ptcm);
 	return 0;
 }
 

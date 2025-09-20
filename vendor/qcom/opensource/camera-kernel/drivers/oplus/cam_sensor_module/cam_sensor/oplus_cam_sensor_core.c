@@ -832,8 +832,18 @@ int cam_sensor_match_id_oem(struct cam_sensor_ctrl_t *s_ctrl,uint32_t chip_id)
 			vendor_id,
 			s_ctrl->sensordata->id_info.sensor_id,
 			rc);
-		/*if vendor_id id is 512(0x0200),it is short module if vendor_id <= 287(0x011F),it is long(0x011f) or long(0x010f) module*/
-		if(vendor_id > S5KJN5_SHORT_VENDOR_ID){
+		/*if vendor_id id is 512(0x0200),it is short module if vendor_id <= 287(0x011F),it is long(0x011f) or long(0x010f) module, Add 0x700(1792) as new module*/
+		if(vendor_id > S5KJN5_LONG_VENDOR_ID){
+			if(s_ctrl->sensordata->id_info.sensor_id > S5KJN5_LONG_SENSOR_ID)
+			{
+				return 0;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+		else if(vendor_id > S5KJN5_SHORT_VENDOR_ID){
 			if(s_ctrl->sensordata->id_info.sensor_id > S5KJN5_SHORT_SENSOR_ID)
 			{
 				return 0;

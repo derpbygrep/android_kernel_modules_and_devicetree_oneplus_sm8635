@@ -328,12 +328,12 @@ void reset_critical_task_time(void)
     mutex_unlock(&chb_mutex);
 }
 
-void notify_frame_produdce(void)
+void ctb_notify_frame_produce(void)
 {
     if (!ct_enable) {
         return;
     }
-    systrace_c_printk("notify_frame_produdce", 1);
+    systrace_c_printk("ctb_notify_frame_produce", 1);
     kthread_cancel_work_sync(&ct_work);
     kthread_cancel_work_sync(&cb_work);
     kthread_cancel_work_sync(&sw_work);
@@ -343,7 +343,7 @@ void notify_frame_produdce(void)
     reset_time();
     start_hrtimer();
     mutex_unlock(&chb_mutex);
-    systrace_c_printk("notify_frame_produdce", 0);
+    systrace_c_printk("ctb_notify_frame_produce", 0);
 }
 
 static void update_critical_task_time(struct task_struct *task, int i, bool is_prev_task)

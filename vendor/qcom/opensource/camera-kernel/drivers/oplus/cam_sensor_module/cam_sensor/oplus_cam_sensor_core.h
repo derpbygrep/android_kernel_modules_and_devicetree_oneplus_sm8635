@@ -15,6 +15,8 @@
 #define CAM_S5KJN5_SENSOR_ID 0x38E5
 #define S5KJN5_SHORT_SENSOR_ID  511
 #define S5KJN5_SHORT_VENDOR_ID  511
+#define S5KJN5_LONG_SENSOR_ID  1791
+#define S5KJN5_LONG_VENDOR_ID  1791
 
 struct cam_sensor_i2c_reg_setting_array {
 	struct cam_sensor_i2c_reg_array reg_setting[CAM_OEM_INITSETTINGS_SIZE_MAX];

@@ -229,17 +229,17 @@ static int syna_tcm_save_flash_block_data(struct image_info *image_info,
 		unsigned int offset, unsigned int size, unsigned int checksum)
 {
 	if (!image_info) {
-		LOGE("Invalid image_info\n");
+		hbp_err("Invalid image_info\n");
 		return _EINVAL;
 	}
 
 	if (area >= AREA_MAX) {
-		LOGE("Invalid flash area\n");
+		hbp_err("Invalid flash area\n");
 		return _EINVAL;
 	}
 
 	if (checksum != CRC32((const char *)content, size)) {
-		LOGE("%s checksum error, in image: 0x%x (0x%x)\n",
+		hbp_err("%s checksum error, in image: 0x%x (0x%x)\n",
 			AREA_ID_STR(area), checksum,
 			CRC32((const char *)content, size));
 		return _EINVAL;
@@ -250,7 +250,7 @@ static int syna_tcm_save_flash_block_data(struct image_info *image_info,
 	image_info->data[area].id = (unsigned char)area;
 	image_info->data[area].available = true;
 
-	LOGI("%s area - address:0x%08x (%d), size:%d\n",
+	hbp_info("%s area - address:0x%08x (%d), size:%d\n",
 		AREA_ID_STR(area), offset, offset, size);
 
 	return 0;
@@ -318,12 +318,12 @@ static inline int syna_tcm_parse_fw_image(const unsigned char *image,
 	enum flash_area target_area;
 
 	if (!image) {
-		LOGE("No image data\n");
+		hbp_err("No image data\n");
 		return _EINVAL;
 	}
 
 	if (!image_info) {
-		LOGE("Invalid image_info blob\n");
+		hbp_err("Invalid image_info blob\n");
 		return _EINVAL;
 	}
 
@@ -333,7 +333,7 @@ static inline int syna_tcm_parse_fw_image(const unsigned char *image,
 
 	magic_value = syna_pal_le4_to_uint(header->magic_value);
 	if (magic_value != IMAGE_FILE_MAGIC_VALUE) {
-		LOGE("Invalid image file magic value\n");
+		hbp_err("Invalid image file magic value\n");
 		return _EINVAL;
 	}
 
@@ -403,12 +403,12 @@ static inline int syna_tcm_parse_ihex_line(char *line, unsigned int *count,
 	unsigned int pos;
 
 	if (!line) {
-		LOGE("No string line\n");
+		hbp_err("No string line\n");
 		return _EINVAL;
 	}
 
 	if ((!buf) || (buf_size == 0)) {
-		LOGE("Invalid temporary data buffer\n");
+		hbp_err("Invalid temporary data buffer\n");
 		return _EINVAL;
 	}
 
@@ -420,7 +420,7 @@ static inline int syna_tcm_parse_ihex_line(char *line, unsigned int *count,
 			line + OFFSET_TYPE, SIZE_TYPE);
 
 	if (*count > buf_size) {
-		LOGE("Data size mismatched, required:%d, given:%d\n",
+		hbp_err("Data size mismatched, required:%d, given:%d\n",
 			*count, buf_size);
 		return _EINVAL;
 	}
@@ -465,23 +465,23 @@ static inline int syna_tcm_parse_fw_ihex(const char *ihex, int ihex_size,
 	unsigned int block_idx = 0;
 
 	if (!ihex) {
-		LOGE("No ihex data\n");
+		hbp_err("No ihex data\n");
 		return _EINVAL;
 	}
 
 	if (!ihex_info) {
-		LOGE("Invalid ihex_info blob\n");
+		hbp_err("Invalid ihex_info blob\n");
 		return _EINVAL;
 	}
 
 	if ((!ihex_info->bin) || (ihex_info->bin_size == 0)) {
-		LOGE("Invalid ihex_info->data\n");
+		hbp_err("Invalid ihex_info->data\n");
 		return _EINVAL;
 	}
 
 	tmp = syna_pal_mem_alloc(len_per_line + 1, sizeof(char));
 	if (!tmp) {
-		LOGE("Fail to allocate temporary buffer\n");
+		hbp_err("Fail to allocate temporary buffer\n");
 		return _ENOMEM;
 	}
 
@@ -496,7 +496,7 @@ static inline int syna_tcm_parse_fw_ihex(const char *ihex, int ihex_size,
 	for (record = 0; record < ihex_info->records; record++) {
 		pos = record * len_per_line;
 		if ((char)ihex[pos] != ':') {
-			LOGE("Invalid string maker at pos %d, marker:%c\n",
+			hbp_err("Invalid string maker at pos %d, marker:%c\n",
 				pos, (char)ihex[pos]);
 			goto exit;
 		}
@@ -504,21 +504,21 @@ static inline int syna_tcm_parse_fw_ihex(const char *ihex, int ihex_size,
 		retval = syna_pal_mem_cpy(tmp, len_per_line,
 				&ihex[pos], ihex_size - pos, len_per_line);
 		if (retval < 0) {
-			LOGE("Fail to copy a line at pos %d\n", pos);
+			hbp_err("Fail to copy a line at pos %d\n", pos);
 			goto exit;
 		}
 
 		retval = syna_tcm_parse_ihex_line(tmp, &count, &addr, &type,
 				data, sizeof(data));
 		if (retval < 0) {
-			LOGE("Fail to parse line at pos %d\n", pos);
+			hbp_err("Fail to parse line at pos %d\n", pos);
 			goto exit;
 		}
 
 		if ((((prev_addr + 2) & 0xFFFF) != addr) && (type == 0x00)) {
 			block_idx = (record == 0) ? 0 : block_idx + 1;
 			if (block_idx >= IHEX_MAX_BLOCKS) {
-				LOGE("Invalid block index\n");
+				hbp_err("Invalid block index\n");
 				goto exit;
 			}
 
@@ -535,14 +535,14 @@ static inline int syna_tcm_parse_fw_ihex(const char *ihex, int ihex_size,
 			addr += offset;
 
 			if (addr >= ihex_info->bin_size) {
-				LOGE("No enough size for data0 addr:0x%x(%d)\n",
+				hbp_err("No enough size for data0 addr:0x%x(%d)\n",
 					addr, addr);
 				goto exit;
 			}
 			ihex_info->bin[addr++] = data[0];
 
 			if (addr >= ihex_info->bin_size) {
-				LOGE("No enough size for data1 addr:0x%x(%d)\n",
+				hbp_err("No enough size for data1 addr:0x%x(%d)\n",
 					addr, addr);
 				goto exit;
 			}

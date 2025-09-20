@@ -680,6 +680,24 @@ debug:
 }
 EXPORT_SYMBOL_GPL(oplus_pipeline_task_skip_cpu);
 
+bool oplus_pipeline_rt_skip_prime_cpu(unsigned int dst_cpu)
+{
+	if (unlikely(!global_sched_assist_enabled))
+		return false;
+
+	if (likely(prime_task == NULL))
+		return false;
+
+	if ((prime_cpu_num == 1) && (dst_cpu == nr_cpu_ids - 1))
+		return true;
+
+	if ((prime_cpu_num == 2) && ((dst_cpu == nr_cpu_ids - 1) || (dst_cpu == nr_cpu_ids - 2)))
+		return true;
+
+	return false;
+}
+EXPORT_SYMBOL_GPL(oplus_pipeline_rt_skip_prime_cpu);
+
 core_ctl_set_boost_t oplus_core_ctl_set_boost = NULL;
 EXPORT_SYMBOL_GPL(oplus_core_ctl_set_boost);
 core_ctl_set_cluster_boost_t oplus_core_ctl_set_cluster_boost = NULL;

@@ -2074,8 +2074,10 @@ exit_device_init_failed:
 	aw87xxx_dev_hw_pwr_ctrl(&aw87xxx->aw_dev, false);
 exit_dtsi_parse_failed:
 	AW_DEV_LOGE(aw87xxx->dev, "pa init failed");
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	if (gpio_is_valid(aw87xxx->aw_dev.rst_gpio))
-		gpio_free(aw87xxx->aw_dev.rst_gpio);
+		devm_gpio_free(aw87xxx->dev, aw87xxx->aw_dev.rst_gpio);
+#endif
 #ifdef OPLUS_ARCH_EXTENDS
 // add for AW87xxx_2_X_0
 	i2c_set_clientdata(client, NULL);
@@ -2103,8 +2105,10 @@ static int aw87xxx_i2c_remove(struct i2c_client *client)
 	oplus_speaker_pa_unregister(aw87xxx->oplus_dev_node);
 #endif /*CONFIG_SND_SOC_OPLUS_PA_MANAGER*/
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	if (gpio_is_valid(aw87xxx->aw_dev.rst_gpio))
-		gpio_free(aw87xxx->aw_dev.rst_gpio);
+		devm_gpio_free(aw87xxx->dev, aw87xxx->aw_dev.rst_gpio);
+#endif
 
 	if (aw87xxx->dev_index == 0)
 		aw87xxx_algo_auth_misc_deinit(&aw87xxx->aw_dev);

@@ -88,7 +88,7 @@ static int syna_tcm_v2_set_max_rw_size(struct tcm_dev *tcm_dev)
 	unsigned char data[2] = { 0 };
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -98,12 +98,12 @@ static int syna_tcm_v2_set_max_rw_size(struct tcm_dev *tcm_dev)
 	wr_size = syna_pal_le2_to_uint(id_info->max_write_size);
 
 	if (wr_size == 0) {
-		LOGE("Invalid max write size from identify report\n");
+		hbp_err("Invalid max write size from identify report\n");
 		return 0;
 	}
 
 	if (rd_size == 0) {
-		LOGE("Invalid max read size from identify report\n");
+		hbp_err("Invalid max read size from identify report\n");
 		return 0;
 	}
 
@@ -135,7 +135,7 @@ static int syna_tcm_v2_set_max_rw_size(struct tcm_dev *tcm_dev)
 				data,
 				sizeof(data));
 		if (retval < 0) {
-			LOGE("Fail to set max read size\n");
+			hbp_err("Fail to set max read size\n");
 			return retval;
 		}
 
@@ -168,12 +168,12 @@ static int syna_tcm_v2_parse_idinfo(struct tcm_dev *tcm_dev,
 	struct tcm_identification_info *id_info;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!data) || (data_len == 0)) {
-		LOGE("Invalid given data buffer\n");
+		hbp_err("Invalid given data buffer\n");
 		return _EINVAL;
 	}
 
@@ -185,7 +185,7 @@ static int syna_tcm_v2_parse_idinfo(struct tcm_dev *tcm_dev,
 			size,
 			MIN(sizeof(*id_info), data_len));
 	if (retval < 0) {
-		LOGE("Fail to copy identification info\n");
+		hbp_err("Fail to copy identification info\n");
 		return retval;
 	}
 
@@ -194,7 +194,7 @@ static int syna_tcm_v2_parse_idinfo(struct tcm_dev *tcm_dev,
 	if (tcm_dev->packrat_number != build_id)
 		tcm_dev->packrat_number = build_id;
 
-	LOGI("TCM Fw mode: 0x%02x\n", id_info->mode);
+	hbp_info("TCM Fw mode: 0x%02x\n", id_info->mode);
 
 	tcm_dev->dev_mode = id_info->mode;
 
@@ -223,7 +223,7 @@ static void syna_tcm_v2_dispatch_report(struct tcm_dev *tcm_dev)
 	syna_pal_completion_t *cmd_completion = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return;
 	}
 
@@ -244,7 +244,7 @@ static void syna_tcm_v2_dispatch_report(struct tcm_dev *tcm_dev)
 	retval = syna_tcm_buf_alloc(&tcm_dev->report_buf,
 			tcm_msg->payload_length);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for internal buf.report\n");
+		hbp_err("Fail to allocate memory for internal buf.report\n");
 		syna_tcm_buf_unlock(&tcm_dev->report_buf);
 		goto exit;
 	}
@@ -257,7 +257,7 @@ static void syna_tcm_v2_dispatch_report(struct tcm_dev *tcm_dev)
 			tcm_msg->in.buf_size - MESSAGE_HEADER_SIZE,
 			tcm_msg->payload_length);
 	if (retval < 0) {
-		LOGE("Fail to copy payload to buf_report\n");
+		hbp_err("Fail to copy payload to buf_report\n");
 		syna_tcm_buf_unlock(&tcm_msg->in);
 		syna_tcm_buf_unlock(&tcm_dev->report_buf);
 		goto exit;
@@ -279,7 +279,7 @@ static void syna_tcm_v2_dispatch_report(struct tcm_dev *tcm_dev)
 				tcm_msg->in.buf_size - MESSAGE_HEADER_SIZE,
 				tcm_msg->payload_length);
 		if (retval < 0) {
-			LOGE("Fail to identify device\n");
+			hbp_err("Fail to identify device\n");
 			syna_tcm_buf_unlock(&tcm_msg->in);
 			return;
 		}
@@ -289,7 +289,7 @@ static void syna_tcm_v2_dispatch_report(struct tcm_dev *tcm_dev)
 		/* do setup in case of differences in read/write size */
 		retval = syna_tcm_v2_set_max_rw_size(tcm_dev);
 		if (retval < 0) {
-			LOGE("Fail to setup the max length to read/write\n");
+			hbp_err("Fail to setup the max length to read/write\n");
 			return;
 		}
 		if (0x0b == tcm_dev->dev_mode) {
@@ -321,7 +321,7 @@ static void syna_tcm_v2_dispatch_report(struct tcm_dev *tcm_dev)
 				syna_pal_completion_complete(cmd_completion);
 				goto exit;
 			default:
-				LOGI("Unexpected 0x%02X report received\n",
+				hbp_info("Unexpected 0x%02X report received\n",
 					REPORT_IDENTIFY);
 				ATOMIC_SET(tcm_msg->command_status,
 					CMD_STATE_ERROR);
@@ -365,7 +365,7 @@ static void syna_tcm_v2_dispatch_response(struct tcm_dev *tcm_dev)
 	syna_pal_completion_t *cmd_completion = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return;
 	}
 
@@ -388,7 +388,7 @@ static void syna_tcm_v2_dispatch_response(struct tcm_dev *tcm_dev)
 	retval = syna_tcm_buf_alloc(&tcm_dev->resp_buf,
 			resp_data_length + 1);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for internal buf.resp\n");
+		hbp_err("Fail to allocate memory for internal buf.resp\n");
 		syna_tcm_buf_unlock(&tcm_dev->resp_buf);
 		ATOMIC_SET(tcm_msg->command_status, CMD_STATE_ERROR);
 		goto exit;
@@ -402,7 +402,7 @@ static void syna_tcm_v2_dispatch_response(struct tcm_dev *tcm_dev)
 			tcm_msg->in.buf_size - MESSAGE_HEADER_SIZE,
 			resp_data_length);
 	if (retval < 0) {
-		LOGE("Fail to copy payload to internal resp_buf\n");
+		hbp_err("Fail to copy payload to internal resp_buf\n");
 		syna_tcm_buf_unlock(&tcm_msg->in);
 		syna_tcm_buf_unlock(&tcm_dev->resp_buf);
 		ATOMIC_SET(tcm_msg->command_status, CMD_STATE_ERROR);
@@ -448,7 +448,7 @@ static int syna_tcm_v2_read(struct tcm_dev *tcm_dev, unsigned int rd_length,
 	struct tcm_message_data_blob *tcm_msg = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -463,7 +463,7 @@ static int syna_tcm_v2_read(struct tcm_dev *tcm_dev, unsigned int rd_length,
 	xfer_len += sizeof(struct tcm_v2_message_header);
 
 	if ((max_rd_size != 0) && (xfer_len > max_rd_size)) {
-		LOGE("Invalid xfer length, len: %d, max_rd_size: %d\n",
+		hbp_err("Invalid xfer length, len: %d, max_rd_size: %d\n",
 			xfer_len, max_rd_size);
 		tcm_msg->status_report_code = STATUS_INVALID;
 		return _EINVAL;
@@ -474,7 +474,7 @@ static int syna_tcm_v2_read(struct tcm_dev *tcm_dev, unsigned int rd_length,
 	/* allocate the internal temp buffer */
 	retval = syna_tcm_buf_alloc(&tcm_msg->temp, xfer_len);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for internal buf.temp\n");
+		hbp_err("Fail to allocate memory for internal buf.temp\n");
 		goto exit;
 	}
 	/* read data from the bus */
@@ -482,7 +482,7 @@ static int syna_tcm_v2_read(struct tcm_dev *tcm_dev, unsigned int rd_length,
 			tcm_msg->temp.buf,
 			xfer_len);
 	if (retval < 0) {
-		LOGE("Fail to read from device\n");
+		hbp_err("Fail to read from device\n");
 		goto exit;
 	}
 
@@ -491,7 +491,7 @@ static int syna_tcm_v2_read(struct tcm_dev *tcm_dev, unsigned int rd_length,
 	/* check header crc always */
 	crc6 = syna_tcm_crc6(header->data, BITS_IN_MESSAGE_HEADER);
 	if (crc6 != 0) {
-		LOGE("Invalid header crc: 0x%02x\n", (header->byte3 & 0x3f));
+		hbp_err("Invalid header crc: 0x%02x\n", (header->byte3 & 0x3f));
 
 		tcm_msg->status_report_code = STATUS_PACKET_CORRUPTED;
 		goto exit;
@@ -502,7 +502,7 @@ static int syna_tcm_v2_read(struct tcm_dev *tcm_dev, unsigned int rd_length,
 	if (rd_length > 0) {
 		crc16 = syna_tcm_crc16(&tcm_msg->temp.buf[0], xfer_len, 0xFFFF);
 		if (crc16 != 0) {
-			LOGE("Invalid payload crc: %02x %02x\n",
+			hbp_err("Invalid payload crc: %02x %02x\n",
 				tcm_msg->temp.buf[xfer_len - 2],
 				tcm_msg->temp.buf[xfer_len - 1]);
 
@@ -563,7 +563,7 @@ static int syna_tcm_v2_write(struct tcm_dev *tcm_dev, unsigned char command,
 	struct tcm_message_data_blob *tcm_msg = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -579,7 +579,7 @@ static int syna_tcm_v2_write(struct tcm_dev *tcm_dev, unsigned char command,
 	xfer_len += sizeof(struct tcm_v2_message_header);
 
 	if ((max_wr_size != 0) && (xfer_len > max_wr_size)) {
-		LOGE("Invalid xfer length, len: %d, max_wr_size: %d\n",
+		hbp_err("Invalid xfer length, len: %d, max_wr_size: %d\n",
 			xfer_len, max_wr_size);
 		tcm_msg->status_report_code = STATUS_INVALID;
 		return _EINVAL;
@@ -590,7 +590,7 @@ static int syna_tcm_v2_write(struct tcm_dev *tcm_dev, unsigned char command,
 	/* allocate the internal out buffer */
 	retval = syna_tcm_buf_alloc(&tcm_msg->out, xfer_len);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for internal buf.out\n");
+		hbp_err("Fail to allocate memory for internal buf.out\n");
 		goto exit;
 	}
 
@@ -620,7 +620,7 @@ static int syna_tcm_v2_write(struct tcm_dev *tcm_dev, unsigned char command,
 				payload_len,
 				payload_len);
 		if (retval < 0) {
-			LOGE("Fail to copy payload data\n");
+			hbp_err("Fail to copy payload data\n");
 			goto exit;
 		}
 
@@ -635,7 +635,7 @@ static int syna_tcm_v2_write(struct tcm_dev *tcm_dev, unsigned char command,
 			tcm_msg->out.buf,
 			xfer_len);
 	if (retval < 0) {
-		LOGE("Fail to write to device\n");
+		hbp_err("Fail to write to device\n");
 		goto exit;
 	}
 
@@ -678,7 +678,7 @@ static int syna_tcm_v2_continued_read(struct tcm_dev *tcm_dev,
 	struct tcm_v2_message_header *header;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -697,7 +697,7 @@ static int syna_tcm_v2_continued_read(struct tcm_dev *tcm_dev,
 	retval = syna_tcm_buf_realloc(&tcm_msg->in,
 			total_length + 1);
 	if (retval < 0) {
-		LOGE("Fail to allocate memory for internal buf_in\n");
+		hbp_err("Fail to allocate memory for internal buf_in\n");
 		goto exit;
 	}
 
@@ -727,7 +727,7 @@ retry:
 				0,
 				false);
 		if (retval < 0) {
-			LOGE("Fail to send CMD_TCM2_ACK in continued read\n");
+			hbp_err("Fail to send CMD_TCM2_ACK in continued read\n");
 			goto exit;
 		}
 
@@ -742,7 +742,7 @@ retry:
 				&tmp_buf,
 				&tmp_buf_size);
 		if (retval < 0) {
-			LOGE("Fail to read %d bytes from device\n",
+			hbp_err("Fail to read %d bytes from device\n",
 					xfer_length);
 			goto exit;
 		}
@@ -752,7 +752,7 @@ retry:
 		 */
 		if (tcm_msg->status_report_code == STATUS_PACKET_CORRUPTED) {
 			if (retry_cnt > COMMAND_RETRY_TIMES) {
-				LOGE("Continued read packet corrupted\n");
+				hbp_err("Continued read packet corrupted\n");
 				goto exit;
 			}
 
@@ -776,7 +776,7 @@ retry:
 				tmp_buf_size - MESSAGE_HEADER_SIZE,
 				xfer_length);
 		if (retval < 0) {
-			LOGE("Fail to copy payload to internal buf_in\n");
+			hbp_err("Fail to copy payload to internal buf_in\n");
 			syna_tcm_buf_unlock(&tcm_msg->temp);
 			goto exit;
 		}
@@ -822,7 +822,7 @@ static int syna_tcm_v2_get_response(struct tcm_dev *tcm_dev)
 	struct tcm_message_data_blob *tcm_msg = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -834,7 +834,7 @@ static int syna_tcm_v2_get_response(struct tcm_dev *tcm_dev)
 			&tmp_buf,
 			&tmp_buf_size);
 	if (retval < 0) {
-		LOGE("Fail to read message header from device\n");
+		hbp_err("Fail to read message header from device\n");
 		return retval;
 	}
 
@@ -849,7 +849,7 @@ static int syna_tcm_v2_get_response(struct tcm_dev *tcm_dev)
 	retval = syna_tcm_buf_alloc(&tcm_msg->in,
 			MESSAGE_HEADER_SIZE + tcm_msg->payload_length);
 	if (retval < 0) {
-		LOGE("Fail to reallocate memory for internal buf.in\n");
+		hbp_err("Fail to reallocate memory for internal buf.in\n");
 		syna_tcm_buf_unlock(&tcm_msg->in);
 		return retval;
 	}
@@ -860,7 +860,7 @@ static int syna_tcm_v2_get_response(struct tcm_dev *tcm_dev)
 			tmp_buf_size,
 			MESSAGE_HEADER_SIZE);
 	if (retval < 0) {
-		LOGE("Fail to copy data to internal buf_in\n");
+		hbp_err("Fail to copy data to internal buf_in\n");
 		syna_tcm_buf_unlock(&tcm_msg->in);
 		return retval;
 	}
@@ -873,7 +873,7 @@ static int syna_tcm_v2_get_response(struct tcm_dev *tcm_dev)
 		retval = syna_tcm_v2_continued_read(tcm_dev,
 				tcm_msg->payload_length);
 		if (retval < 0) {
-			LOGE("Fail to read in payload data, size: %d)\n",
+			hbp_err("Fail to read in payload data, size: %d)\n",
 				tcm_msg->payload_length);
 			return retval;
 		}
@@ -918,7 +918,7 @@ static inline int syna_tcm_v2_send_cmd(struct tcm_dev *tcm_dev,
 			length,
 			resend);
 	if (retval < 0)
-		LOGE("Fail to write Command 0x%02x to device\n", command);
+		hbp_err("Fail to write Command 0x%02x to device\n", command);
 
 	return retval;
 }
@@ -958,7 +958,7 @@ static int syna_tcm_v2_execute_cmd_request(struct tcm_dev *tcm_dev,
 	struct tcm_message_data_blob *tcm_msg = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1009,7 +1009,7 @@ retry:
 		/* get the response to the command immediately */
 		retval = syna_tcm_v2_get_response(tcm_dev);
 		if (retval < 0) {
-			LOGE("Fail to get the response to command 0x%02x\n",
+			hbp_err("Fail to get the response to command 0x%02x\n",
 				command);
 			goto exit;
 		}
@@ -1033,21 +1033,21 @@ retry:
 			retry_cnt += 1;
 			break;
 		default:
-			LOGE("Incorrect status code 0x%02x of command 0x%02x\n",
+			hbp_err("Incorrect status code 0x%02x of command 0x%02x\n",
 				tcm_msg->status_report_code, command);
 			goto exit;
 		}
 
 		if (retry_cnt > 0) {
 			if (command == CMD_RESET) {
-				LOGE("Command CMD_RESET corrupted, exit\n");
+				hbp_err("Command CMD_RESET corrupted, exit\n");
 				/* assume ACK and wait for interrupt assertion
 				 * once the response of reset is corrupted
 				 */
 				tcm_msg->response_code = STATUS_ACK;
 				goto exit;
 			} else if (retry_cnt > COMMAND_RETRY_TIMES) {
-				LOGE("Command 0x%02x corrupted\n", command);
+				hbp_err("Command 0x%02x corrupted\n", command);
 				goto exit;
 			}
 
@@ -1092,7 +1092,7 @@ static int syna_tcm_v2_read_message(struct tcm_dev *tcm_dev,
 	syna_pal_completion_t *cmd_completion = NULL;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1113,7 +1113,7 @@ static int syna_tcm_v2_read_message(struct tcm_dev *tcm_dev,
 			NULL,
 			0);
 	if (retval < 0) {
-		LOGE("Fail to send command CMD_TCM2_GET_REPORT\n");
+		hbp_err("Fail to send command CMD_TCM2_GET_REPORT\n");
 
 		if (ATOMIC_GET(tcm_msg->command_status) == CMD_STATE_BUSY) {
 			ATOMIC_SET(tcm_msg->command_status, CMD_STATE_ERROR);
@@ -1128,7 +1128,7 @@ static int syna_tcm_v2_read_message(struct tcm_dev *tcm_dev,
 		retval = syna_tcm_buf_alloc(&tcm_dev->external_buf,
 				tcm_msg->payload_length);
 		if (retval < 0) {
-			LOGE("Fail to allocate memory, external_buf invalid\n");
+			hbp_err("Fail to allocate memory, external_buf invalid\n");
 			syna_tcm_buf_unlock(&tcm_dev->external_buf);
 			goto exit;
 		} else {
@@ -1138,7 +1138,7 @@ static int syna_tcm_v2_read_message(struct tcm_dev *tcm_dev,
 				tcm_msg->in.buf_size - MESSAGE_HEADER_SIZE,
 				tcm_msg->payload_length);
 			if (retval < 0) {
-				LOGE("Fail to copy data to external buffer\n");
+				hbp_err("Fail to copy data to external buffer\n");
 				syna_tcm_buf_unlock(&tcm_dev->external_buf);
 				goto exit;
 			}
@@ -1202,7 +1202,7 @@ static int syna_tcm_v2_write_message(struct tcm_dev *tcm_dev,
 	bool in_polling = false;
 
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
@@ -1230,7 +1230,7 @@ static int syna_tcm_v2_write_message(struct tcm_dev *tcm_dev,
 	// if (has_irq_ctrl && in_polling && tcm_dev->hw_if->ops_enable_irq)
 	// 	tcm_dev->hw_if->ops_enable_irq(tcm_dev->hw_if, false);
 
-	LOGI("write command: 0x%02x, payload size: %d\n",
+	hbp_info("write command: 0x%02x, payload size: %d\n",
 		command, payload_length);
 
 	syna_pal_mutex_lock(cmd_mutex);
@@ -1250,7 +1250,7 @@ static int syna_tcm_v2_write_message(struct tcm_dev *tcm_dev,
 			payload,
 			payload_length);
 	if (retval < 0) {
-		LOGE("Fail to send command 0x%02x to device\n", command);
+		hbp_err("Fail to send command 0x%02x to device\n", command);
 		goto exit;
 	}
 
@@ -1306,12 +1306,12 @@ static int syna_tcm_v2_write_message(struct tcm_dev *tcm_dev,
 check_response:
 	if (ATOMIC_GET(tcm_msg->command_status) != CMD_STATE_IDLE) {
 		if (timeout >= CMD_RESPONSE_TIMEOUT_MS) {
-			LOGE("Timed out wait for response of command 0x%02x\n",
+			hbp_err("Timed out wait for response of command 0x%02x\n",
 				command);
 			retval = _ETIMEDOUT;
 			goto exit;
 		} else {
-			LOGE("Fail to get valid response of command 0x%02x\n",
+			hbp_err("Fail to get valid response of command 0x%02x\n",
 				command);
 			retval = _EIO;
 			goto exit;
@@ -1325,7 +1325,7 @@ check_response:
 		*resp_code = tcm_msg->status_report_code;
 
 	if (tcm_msg->response_code != STATUS_OK) {
-		LOGE("Error code 0x%02x of command 0x%02x\n",
+		hbp_err("Error code 0x%02x of command 0x%02x\n",
 			tcm_msg->response_code, tcm_msg->command);
 		retval = _EIO;
 	} else {
@@ -1359,7 +1359,7 @@ exit:
 void syna_tcm_v2_set_ops(struct tcm_dev *tcm_dev)
 {
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return;
 	}
 
@@ -1392,19 +1392,19 @@ int syna_tcm_v2_detect(struct tcm_dev *tcm_dev, unsigned char *data,
 	struct tcm_message_data_blob *tcm_msg = NULL;
 	unsigned char resp_code = 0;
 
-	LOGI("%s is called.\n", __func__);
+	hbp_info("%s is called.\n", __func__);
 	if (!tcm_dev) {
-		LOGE("Invalid tcm device handle\n");
+		hbp_err("Invalid tcm device handle\n");
 		return _EINVAL;
 	}
 
 	if ((!data) || (size < MESSAGE_HEADER_SIZE)) {
-		LOGE("Invalid parameters\n");
+		hbp_err("Invalid parameters\n");
 		return _EINVAL;
 	}
 
 	if (syna_tcm_crc6(data, BITS_IN_MESSAGE_HEADER) != 0) {
-		LOGE("Invalid crc6\n");
+		hbp_err("Invalid crc6\n");
 		return _ENODEV;
 	}
 	tcm_msg = &tcm_dev->msg_data;
@@ -1428,7 +1428,7 @@ int syna_tcm_v2_detect(struct tcm_dev *tcm_dev, unsigned char *data,
 					&resp_code,
 					RESET_DELAY_MS);
 			if (retval < 0) {
-				LOGE("Fail to identify at startup\n");
+				hbp_err("Fail to identify at startup\n");
 				return retval;
 			}
 		}
@@ -1443,7 +1443,7 @@ int syna_tcm_v2_detect(struct tcm_dev *tcm_dev, unsigned char *data,
 				tcm_msg->in.buf_size,
 				tcm_msg->payload_length);
 		if (retval < 0) {
-			LOGE("Fail to parse identify report at startup\n");
+			hbp_err("Fail to parse identify report at startup\n");
 			syna_tcm_buf_unlock(&tcm_msg->in);
 			return retval;
 		}
@@ -1454,7 +1454,7 @@ int syna_tcm_v2_detect(struct tcm_dev *tcm_dev, unsigned char *data,
 	/* set up the max. reading length at startup */
 	retval = syna_tcm_v2_set_max_rw_size(tcm_dev);
 	if (retval < 0) {
-		LOGE("Fail to setup the max length to read/write\n");
+		hbp_err("Fail to setup the max length to read/write\n");
 		return retval;
 	}
 
@@ -1465,9 +1465,9 @@ int syna_tcm_v2_detect(struct tcm_dev *tcm_dev, unsigned char *data,
 	tcm_dev->msg_data.has_extra_rc = false;
 	tcm_dev->msg_data.rc_byte = 0x00;
 
-	LOGI("Message appending: crc:(%s)\n",
+	hbp_info("Message appending: crc:(%s)\n",
 			(tcm_msg->has_crc) ? "yes" : "no");
-	LOGI("Message appending: extra rc:(%s)\n",
+	hbp_info("Message appending: extra rc:(%s)\n",
 			(tcm_msg->has_extra_rc) ? "yes" : "no");
 
 	/* set up read/write operations */
