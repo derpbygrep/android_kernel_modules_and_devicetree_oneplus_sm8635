@@ -3467,6 +3467,7 @@ static int oplus_chg_vg_get_sub_btb_connect_state(
 	/* check if the btb_state can be got by gpio */
 	if (gpio_is_valid(sub_btb->gpio)) {
 		*state = gpio_get_value(sub_btb->gpio);
+		chg_debug("btb_state can be got by gpio, *state = %d \n", *state);
 		return 0;
 	}
 
@@ -3488,7 +3489,7 @@ static int oplus_chg_vg_get_sub_btb_connect_state(
 		break;
 	}
 
-	chg_debug("rc = %d, func_support = %d", rc, func_support);
+	chg_debug("rc = %d, func_support = %d, state = %d \n", rc, func_support, *state);
 	if (!func_support) {
 		*state = BATT_BTB_STATE_NOT_SUPPORT;
 		rc = 0;
@@ -4467,8 +4468,6 @@ static void oplus_virtual_wired_subs_callback(struct mms_subscribe *subs,
 				if (chip->wired_online && sub_btb->support) {
 					chg_info("start the btb check work!");
 					schedule_delayed_work(&chip->btb_connect_state_check_work, 0);
-				} else {
-					sub_btb->pre_connect_state = BATT_BTB_STATE_CONNECT;
 				}
 			}
 			break;
@@ -4531,8 +4530,6 @@ static void oplus_virtual_wls_subs_callback(
 				chg_debug("wls_online = %d", data.intval);
 				if (chip->wls_online && sub_btb->support)
 					schedule_delayed_work(&chip->btb_connect_state_check_work, 0);
-				else
-					sub_btb->pre_connect_state = BATT_BTB_STATE_CONNECT;
 			}
 			break;
 		default:
